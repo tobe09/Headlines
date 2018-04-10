@@ -1,9 +1,16 @@
 ﻿class MyServiceWorker {
-    constructor() {
-    }
+
     _updateReady(worker) {
-        worker.postMessage({ 'key': 'skipWaiting' });
+        $('.update-sw').css('display', 'block');
+        $('#btnYes').on('click', function () {
+            $('.update-sw').css('display', 'none');
+            worker.postMessage({ 'key': 'skipWaiting' });
+        })
+        $('#btnNo').on('click', function () {
+            $('.update-sw').css('display', 'none');
+        })
     }
+
     _trackInstalling(worker) {
         worker.addEventListener('statechange', () => {
             if (worker.state === 'installed') {
@@ -11,6 +18,7 @@
             }
         });
     }
+
     regServiceWorker() {
         if (!navigator.serviceWorker) return
 

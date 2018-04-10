@@ -21,7 +21,7 @@
     <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
     <ProjectView>ShowAllFiles</ProjectView>
     <NodejsPort>1337</NodejsPort>
-    <StartWebBrowser>true</StartWebBrowser>
+    <StartWebBrowser>True</StartWebBrowser>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,16 +40,20 @@
     <Compile Include="src\router.js" />
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="src\assets\cert-key-20180327-124612.p12" />
     <Content Include="src\assets\headlineServer.crt" />
     <Content Include="src\assets\headlineServer.key" />
+    <Content Include="src\assets\images\headlines.ico" />
+    <Content Include="src\assets\images\headlinesRed.jpg" />
+    <Content Include="src\assets\images\noImage.png" />
     <Content Include="src\css\bootstrap.min.css" />
     <Content Include="src\css\myStyles.css" />
     <Content Include="src\index.html" />
     <Content Include="src\indexStatic.html" />
-    <Content Include="src\assets\NoImage.png" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\" />
+    <Folder Include="src\assets\images\" />
     <Folder Include="src\css\" />
     <Folder Include="src\assets\" />
     <Folder Include="src\js\" />
@@ -57,14 +61,18 @@
     <Folder Include="typings\globals\" />
     <Folder Include="typings\globals\bootstrap\" />
     <Folder Include="typings\globals\jquery\" />
+    <Folder Include="typings\globals\mongoose\" />
     <Folder Include="typings\globals\node\" />
     <Folder Include="typings\globals\popper.js\" />
+    <Folder Include="typings\globals\socket.io\" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="typings\globals\bootstrap\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\jquery\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\mongoose\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\node\index.d.ts" />
     <TypeScriptCompile Include="typings\globals\popper.js\index.d.ts" />
+    <TypeScriptCompile Include="typings\globals\socket.io\index.d.ts" />
     <TypeScriptCompile Include="typings\index.d.ts" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->

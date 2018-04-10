@@ -7,7 +7,7 @@
     <meta lang="en" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />-->
+    <link rel="shortcut icon" type="image/png" href="Headlines/src/assets/images/headlines.ico" />
     <link href="Headlines/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="Headlines/src/css/myStyles.css" rel="stylesheet" />
 </head>
@@ -23,24 +23,42 @@
 
                 <div id="filters" class="container">
                     <div class="row">
-                        <div class="col-md-9 col-lg-4">
+                        <div class="col-sm-9 col-lg-5">
                             <div class="row">
-                                <div class="col-xs-12 col-sm-6 col-lg-7">
-                                    Filter by Country:
+                                <div class="col filterHeader">
+                                    <span id="filterType">ALL</span>
+                                    <span id="filterName"></span>
                                 </div>
-                                <div class="col-xs-12 col-sm-6 col-lg-5">
+                            </div>
+                        </div>
+                        <div class="col-sm-9 col-lg-4">
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-3 filterSubHeader">
+                                    Countries:
+                                </div>
+                                <div class="col-xs-12 col-sm-8 offset-sm-1">
                                     <select id="countriesList"><option>Loading...</option></select>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-9 col-lg-4 offset-lg-1">
+                        <div class="col-sm-9 filterSources">
                             <div class="row">
-                                <div class="col-xs-12 col-sm-6">
-                                    Filter by Source:&nbsp;
+                                <div class="col-xs-12 col-sm-3 filterSubHeader">
+                                    Sources:
                                 </div>
-                                <div class="col-xs-12 col-sm-6">
+                                <div class="col-xs-12 col-sm-8 offset-sm-1">
                                     <select id="sourcesList"><option>Loading...</option></select>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12 col-md-2 offset-md-1 text-center">
+                            <div class="notifDiv">
+                                Recieve Live News? <br /> <select id="notifSelect"><option value="yes">Yes</option><option value="no">No</option></select>
+                            </div>
+                            <div class="update-sw">
+                                <span>Update App?<br /> </span>
+                                <button id="btnYes" class="float-left update-btn btn-success">Yes</button>
+                                <button id="btnNo" class="float-right update-btn btn-danger">No</button>
                             </div>
                         </div>
                     </div>
@@ -118,29 +136,41 @@
                     <div class="container">
                         <div class="row">
                             <div class="col">
-                                <p>Popular Countries</p>
-                                <ul>
-                                    <li>Brazil</li>
-                                    <li>Canada</li>
-                                    <li>England</li>
-                                    <li>France</li>
-                                    <li>Germany</li>
-                                    <li>Nigeria</li>
-                                    <li>South Africa</li>
-                                    <li>United States</li>
-                                </ul>
-                                <br /><br />
-                                <p>Popular Sources</p>
-                                <ul>
-                                    <li>Ars Technica</li>
-                                    <li>Endgadget</li>
-                                    <li>HackerNews</li>
-                                    <li>Recode</li>
-                                    <li>Tech Crunch</li>
-                                    <li>The Next Web</li>
-                                    <li>The Verge</li>
-                                    <li>Wired</li>
-                                </ul>
+                                <div class="aside-header"><h4 onclick="handleSourceChange('All')">ALL SOURCES</h4></div>
+                                <div id="asideSources">
+                                    <h5>Loading...</h5>
+                                    <!--<p>Business</p>
+                                    <ul>
+                                        <li><a href="#" onclick="">General 1</a></li>
+                                        <li><a href="#">General 2</a></li>
+                                        <li><a href="#">General 3</a></li>
+                                        <li><a href="#">General 4</a></li>
+                                        <li><a href="#">General 5</a></li>
+                                        <li><a href="#">General 6</a></li>
+                                        <li><a href="#">General 7</a></li>
+                                        <li><a href="#">General 8</a></li>
+                                        <li><a href="#">General 6</a></li>
+                                        <li><a href="#">General 7</a></li>
+                                        <li><a href="#">General 8</a></li>
+                                        <li><a href="#">General 8</a></li>
+                                    </ul>
+                                    <p>General</p>
+                                    <ul>
+                                        <li><a href="#">General 1</a></li>
+                                        <li><a href="#">General 2</a></li>
+                                        <li><a href="#">General 3</a></li>
+                                        <li><a href="#">General 4</a></li>
+                                        <li><a href="#">General 5</a></li>
+                                        <li><a href="#">General 6</a></li>
+                                        <li><a href="#">General 7</a></li>
+                                        <li><a href="#">General 8</a></li>
+                                        <li><a href="#">General 6</a></li>
+                                        <li><a href="#">General 7</a></li>
+                                        <li><a href="#">General 8</a></li>
+                                        <li><a href="#">General 7</a></li>
+                                        <li><a href="#">General 8</a></li>
+                                    </ul>-->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -177,6 +207,7 @@
     <script src="Headlines/node_modules/jquery/dist/jquery.min.js"></script>
     <script src="Headlines/node_modules/popper.js/dist/popper.min.js"></script>
     <script src="Headlines/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="socket.io/socket.io.js"></script>
     <script src="Headlines/src/js/mySwTasks.js"></script>
     <script src="Headlines/src/js/myScript.js"></script>
 </body>

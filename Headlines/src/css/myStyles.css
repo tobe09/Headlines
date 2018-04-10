@@ -47,9 +47,26 @@ footer{
 }
 
 select{
-    min-width:167px;
+    width:200px;
     text-align:center;
     background-color:wheat;
+}
+
+#notifSelect{
+    width:80px;
+}
+
+.update-sw {
+    display: none;
+    max-width: 220px;
+    color: white;
+    background-color: darkslategray;
+    padding: 5px;
+    margin-top: 10px;
+}
+
+.update-btn{
+    color:white;
 }
 
 #filters{
@@ -85,7 +102,28 @@ aside {
     aside p {
         color:cadetblue;
         font-size:20px;
+        margin-bottom:5px;
     }
+
+.aside-header h4{
+    color: darkslategray;
+    margin-bottom:20px;
+    margin-top:10px;
+}
+
+.aside-header h4:hover{
+    color: green;
+    cursor:pointer;
+}
+
+.aside-source{
+    color:blue;
+}
+
+.aside-source:hover{
+    text-decoration:underline;
+    cursor:pointer;
+}
 
 .seperator{
     margin-bottom:100px;
@@ -124,6 +162,26 @@ aside {
     color:white;
 }
 
+.filterHeader{
+    color:darkolivegreen;
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:5px;
+    display:none;
+}
+
+.filterSubHeader{
+    font-size:20px;
+}
+
+#filterType{
+    margin-right:50px;
+}
+
+#filterName{
+    font-style:italic;
+}
+
 #divMsg{
     font-size:16px;
     text-align:center;
@@ -144,10 +202,39 @@ aside {
     color:aqua;
 }
 
+@media screen and (min-width:768px) {
+    select {
+        float: left;
+    }
+
+    aside ul{
+        padding:0px 0px 0px 30px;
+    }
+
+    aside {
+        width: 20%;
+        height: calc(100% - 295px);
+        padding: 0px;
+        position: fixed;
+        margin-top:0px;
+    }
+
+    .filterHeader{
+        display:block;
+    }
+
+    .filterSources{
+        display:none;
+    }
+
+    #divMsg {
+        font-size: 18px;
+    }
+}
+
 @media screen and (min-width:768px) and (max-width:950px){
     aside ul {
-        list-style: none;
-        padding: 0;
+        padding-left: 10px;
         font-size: 16px;
     }
 
@@ -156,27 +243,12 @@ aside {
     }
 }
 
-@media screen and (min-width:768px) {
-    select {
-        float: left;
-    }
-
-    aside {
-        width: 20%;
-        height: calc(100% - 295px);
-        padding: 0px;
-        margin-top: 10px;
-        position: fixed;
-    }
-
-    #divMsg {
-        font-size: 18px;
-    }
-}
-
-@media screen and (min-width:1200px) {
+@media screen and (min-width:992px) {
     aside {
         height: calc(100% - 270px);
-        padding:25px;
+    }
+
+    .update-sw{
+        margin-top:0px;
     }
 }

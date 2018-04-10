@@ -4,8 +4,8 @@ const newCache = 'headlines-static-v3';
 const imgCache = 'headlines-content-imgs';
 const allCaches = [newCache, imgCache];
 
+//install setup
 self.addEventListener('install', event => {
-    //remove scripts and use cdn version later//
     const urlToCache = [
         '/',
         'Headlines/node_modules/jquery/dist/jquery.min.js',
@@ -14,20 +14,25 @@ self.addEventListener('install', event => {
         'Headlines/src/js/myScript.js',
         'Headlines/src/js/mySwTasks.js',
         'Headlines/node_modules/bootstrap/dist/css/bootstrap.min.css',
-        'Headlines/src/css/myStyles.css'        
+        'Headlines/src/css/myStyles.css',
+        'socket.io/socket.io.js'
     ];
-    const imgToCache = ['Headlines/src/assets/NoImage.png'];
+    const imgToCache = [
+        'Headlines/src/assets/images/noImage.png',
+        'Headlines/src/assets/images/headlines.ico',
+        'Headlines/src/assets/images/headlinesRed.jpg'
+    ];
 
     event.waitUntil((function () {
-        caches.open(newCache).then(cache => cache.addAll(urlToCache));
-        caches.open(imgCache).then(cache => cache.addAll(imgToCache));
+        return caches.open(newCache).then(cache => cache.addAll(urlToCache))
+            .then(() => caches.open(imgCache)).then(cache => cache.addAll(imgToCache));
     })());
 })
 
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
-            return Promise.all(             //can simply return the promise
+            return Promise.all(            
                 cacheNames
                     .filter(cacheName => cacheName.startsWith('headlines') && !allCaches.includes(cacheName))
                     .map(cacheToDelete => caches.delete(cacheToDelete))
@@ -38,20 +43,22 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', (event) => {
     let requestUrl = new URL(event.request.url);
-    //on the unlikely chance that the service worker serves more than one origin
     if (requestUrl.origin === location.origin) {
-        if (!requestUrl.pathname.startsWith('/sw/')) {      //does not need sw cacheing
-            event.respondWith(caches.match(requestUrl.pathname).then(val => {
-                return val || fetch(event.request);
-            }));
+        if (requestUrl.pathname.startsWith('/sw/')) {
+            let response;
+            if (requestUrl.pathname === '/sw/allNews') response = getAllNews();
+            else if (requestUrl.pathname === '/sw/countries') response = getCountries();
+            else if (requestUrl.pathname === '/sw/sources') response = getSources();
+            else if (requestUrl.pathname.startsWith('/sw/byCountry')) response = getByCountry(requestUrl.pathname);
+            else if (requestUrl.pathname.startsWith('/sw/bySource')) response = getBySource(requestUrl.pathname);
+            else response = getAllNews();
+
+            event.respondWith(response);
         }
         else {
-            if (requestUrl.pathname === '/sw/allNews') event.respondWith(getAllNews());
-            else if (requestUrl.pathname === '/sw/countries') event.respondWith(getCountries());
-            else if (requestUrl.pathname === '/sw/sources') event.respondWith(getSources());
-            else if (requestUrl.pathname.startsWith('/sw/byCountry')) event.respondWith(getByCountry(requestUrl.pathname));
-            else if (requestUrl.pathname.startsWith('/sw/bySource')) event.respondWith(getBySource(requestUrl.pathname));
-            else getAllNews();
+            event.respondWith(caches.match(requestUrl.pathname).then(data => {
+                return data || fetch(event.request);
+            }));
         }
         return;
     }
@@ -60,7 +67,7 @@ self.addEventListener('fetch', (event) => {
 })
 
 function dbPromise() {
-    let newDbVersion = 3;
+    let newDbVersion = 4;
     return idb.open('headline', newDbVersion, upgradeDb => {
         switch (upgradeDb.oldVersion) {
             case 0:
@@ -68,21 +75,18 @@ function dbPromise() {
                 const countryNewsStore = upgradeDb.createObjectStore('countryNews', { keyPath: 'urlByCountryCode' });
                 const sourceNewsStore = upgradeDb.createObjectStore('sourceNews', { keyPath: 'urlBySourceCode' });
             case 1:
-                const sourcesStore = upgradeDb.createObjectStore('sources', { keyPath: 'sourceId' });
+            const sourcesStore = upgradeDb.createObjectStore('sources', { keyPath: 'sourceId' });
             case 2:
                 allNewsStore.createIndex('by-date', ['publishedAt', 'source.name']);
                 countryNewsStore.createIndex('by-date', ['publishedAt', 'source.name']);
                 sourceNewsStore.createIndex('by-date', ['publishedAt', 'source.name']);
+            case 3:
+                const countryStore = upgradeDb.createObjectStore('countries', { keyPath: 'countryId' });
         }
     });
 }
 
-const newsApiKey = '11bae20ea48e474890528e504ea733e2';
-
 function getAllNews() {
-    const pageSize = 30;
-    const newsApiUrl = 'https://newsapi.org/v2/top-headlines?category=technology&pageSize=' + pageSize + '&apiKey=' + newsApiKey; //top-headlines
-    
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveAllNews();
 
@@ -96,13 +100,16 @@ function getAllNews() {
     })
 
     function fetchAndSaveAllNews() {
-        return fetch(newsApiUrl).then(response => {
-            return response.json().then(jsonData => {
-                let articles = jsonData.articles
-                articles.sort(sortArticles)
+        return fetch('/sw/allNews').then(response => {
+            return response.json().then(articles => {
+                if (articles.Error) return getJsonResponse(articles);
 
-                saveNews('allNews', articles);
-                cleanAllNewsDb('allNews', 30);
+                saveNews('allNews', articles).then(() => {
+                    cleanAllNewsDb('allNews', 30)
+                }).catch(err => {
+                    debugger;
+                });
+
                 return getJsonResponse(articles);
             })
         }).catch(err => {
@@ -111,101 +118,48 @@ function getAllNews() {
     }
 };
 
-function saveNews(storeName, news) {
-    dbPromise().then(db => {
-        if (!db) return;
-
-        const tx = db.transaction(storeName, 'readwrite');
-        const newsStore = tx.objectStore(storeName);
-
-        news.forEach(singleNews => {
-            newsStore.put(singleNews);
-        })
-    })
-}
-
-function saveSources(sources, storeName = 'sources') {
-    saveNews(storeName, sources);
-}
-
-function cleanAllNewsDb(storeName, count) {
-    dbPromise().then(db => {
-        if (!db) return;
-
-        const tx = db.transaction(storeName, 'readwrite');
-        const store = tx.objectStore(storeName);
-        store.index('by-date').openCursor(null, 'prev').then(cursor => {
-            if (!cursor) return;
-            return cursor.advance(count);
-        }).then(function deleteExtras(cursor) {
-            if (!cursor) return;
-            cursor.delete();
-            cursor.continue().then(deleteExtras);
-        })
-    });
-}
-
-function cleanFilteredNewsDb(storeName, count, key, filter) {
-    dbPromise().then(db => {
-        if (!db) return;
-
-        const tx = db.transaction(storeName, 'readwrite');
-        const store = tx.objectStore(storeName);
-
-        store.index('by-date').getAll().then(news => {
-            const filteredNews = news.reverse().filter(singleNews => singleNews[key].endsWith(filter));
-            for (let i = count; i < filteredNews.length; i++) {
-                store.delete(filteredNews[i][key]);
-            }
-        })
-    });
-}
-
 function getCountries() {
-    const countries = [['ae', 'U.A.E'], ['ar', 'Argentina'], ['au', 'Australia'], ['br', 'Brazil'], ['ca', 'Canada'], ['de', 'Germany'],
-        ['fr', 'France'], ['gb', 'England'], ['gr', 'Greece'], ['it', 'Italy'], ['jp', 'Japan'], ['kr', 'Korea'], ['ng', 'Nigeria'], ['nz', 'New Zealand'],
-        ['ph', 'Phillipines'], ['ru', 'Russia'], ['tr', 'Turkey'], ['us', 'United States'], ['ve', 'Venezuela'], ['za', 'South Africa']];
+    return dbPromise().then(db => {
+        if (!db) return fetchAndSaveSources();
 
-    countries.sort((country1, country2) => country1[1].toLowerCase().localeCompare(country2[1].toLowerCase()));
+        const tx = db.transaction('countries', 'readwrite');
+        const countriesStore = tx.objectStore('countries');
 
-    return getJsonResponse(countries);
+        return countriesStore.getAll().then(allCountriesObject => {
+            return allCountriesObject.length > 0 ? getJsonResponse(allCountriesObject[0].data) : fetchAndSaveCountries();
+        });
+    })
+
+    function fetchAndSaveCountries() {
+        return fetch('/sw/countries').then(response => {
+            return response.json().then(countries => {
+                saveCountries(countries);
+                return getJsonResponse(countries);
+            })
+        }).catch(err => {
+            return getJsonResponse({ Error: "Network Connection error occured while fetching countries from the server" });
+        });
+    }
 }
 
 function getSources() {
-    const sourcesUrl = 'https://newsapi.org/v2/sources?apiKey=' + newsApiKey;
-    
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveSources();
 
         const tx = db.transaction('sources', 'readwrite');
         const sourcesStore = tx.objectStore('sources');
-
-        return sourcesStore.getAll().then(sourcesData => {
-            const fetchSaveSources = fetchAndSaveSources();
-            let sources = [];
-            for (const i in sourcesData) {
-                sources.push(sourcesData[i].data);
-            }
-            return sources.length > 0 ? getJsonResponse(sources) : fetchSaveSources;
+        
+        return sourcesStore.getAll().then(allSrcObjects => {
+            return allSrcObjects.length > 0 ? getJsonResponse(allSrcObjects[0].data) : fetchAndSaveSources();
         });
     })
 
     function fetchAndSaveSources() {
         return fetch(sourcesUrl).then(response => {
-            return response.json().then(jsonData => {
-                const sources = jsonData.sources;
-                let techSources = [];
-                let techSourceData = [];
+            return response.json().then(sourceObject => {
+                saveSources(sourceObject);
 
-                for (const source of sources) {
-                    if (source.category === 'technology') {
-                        techSources.push([source.id, source.name]);
-                        techSourceData.push({ sourceId: source.id, data: [source.id, source.name] });
-                    }
-                }
-
-                saveSources(techSourceData);
-                return getJsonResponse(techSources);
+                return getJsonResponse(sourceObject);
             })
         }).catch(error => {
             return getJsonResponse({ Error: "Network Connection error occured while fetching sources from the api" });
@@ -216,8 +170,7 @@ function getSources() {
 function getByCountry(path) {
     const pathInfo = path.split('/')
     const countryCode = pathInfo[pathInfo.length - 1];
-    const byCountryUrl = 'https://newsapi.org/v2/top-headlines?country=' + countryCode + '&apiKey=' + newsApiKey;
-    
+
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveByCountry();
 
@@ -232,17 +185,13 @@ function getByCountry(path) {
     })
 
     function fetchAndSaveByCountry() {
-        return fetch(byCountryUrl).then(response => {
-            return response.json().then(jsonData => {
-                const articles = jsonData.articles;
-                articles.sort(sortArticles)
+        return fetch('sw/byCountry/' + countryCode).then(response => {
+            return response.json().then(articles => {
+                if (articles.Error) return getJsonResponse(articles);
 
-                for (const article of articles) {
-                    article.urlByCountryCode = article.url + countryCode;
-                }
-
-                saveNews('countryNews', articles);
-                cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode);
+                saveNews('countryNews', articles).then(() => {
+                    cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode)
+                });
                 return getJsonResponse(articles);
             })
         }).catch(error => {
@@ -254,15 +203,14 @@ function getByCountry(path) {
 function getBySource(path) {
     const pathInfo = path.split('/')
     const sourceCode = pathInfo[pathInfo.length - 1];
-    const bySoruceUrl = 'https://newsapi.org/v2/top-headlines?sources=' + sourceCode + '&apiKey=' + newsApiKey;
 
     return dbPromise().then(db => {
-        if (!db) return fetchAndSaveByCountry();
+        if (!db) return fetchAndSaveBySource();
 
         const tx = db.transaction('sourceNews', 'readwrite');
         const sourceNewsStore = tx.objectStore('sourceNews');
 
-        return sourceNewsStore.index('by-date').getAll().then(sourceNews => {
+    return sourceNewsStore.index('by-date').getAll().then(sourceNews => {
             const fetchSaveSourceNews = fetchAndSaveBySource();
             const bySourceNews = sourceNews.filter(singleNews => singleNews.urlBySourceCode.endsWith(sourceCode));
             return bySourceNews.length > 0 ? getJsonResponse(bySourceNews.reverse()) : fetchSaveSourceNews;
@@ -270,18 +218,15 @@ function getBySource(path) {
     })
 
     function fetchAndSaveBySource() {
-        return fetch(bySoruceUrl).then(response => {
-            return response.json().then(jsonData => {
-                const articles = jsonData.articles;
-                articles.sort(sortArticles)
+        return fetch('sw/bySource/'+sourceCode).then(response => {
+            return response.json().then(articles => {
+                if (articles.Error) return getJsonResponse(articles);
 
-                for (const article of articles) {
-                    article.urlBySourceCode = article.url + sourceCode;
-                }
+                saveNews('sourceNews', articles).then(val => { 
+                    cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
+                })
 
-                saveNews('sourceNews', articles);
-                cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
-                return getJsonResponse(jsonData.articles);
+                return getJsonResponse(articles);
             })
         }).catch(error => {
             return getJsonResponse({ Error: "Network Connection error occured while filtering by selected source" });
@@ -289,13 +234,88 @@ function getBySource(path) {
     }
 }
 
-function getJsonResponse(jsonData) {
-    return new Response(JSON.stringify(jsonData), { headers: { 'Content-Type': 'application/json' } });
+function saveNews(storeName, news) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        const tx = db.transaction(storeName, 'readwrite');
+        const newsStore = tx.objectStore(storeName);
+
+        let promiseChain = Promise.resolve();
+
+        news.forEach(singleNews => {
+            promiseChain = promiseChain.then(() => newsStore.put(singleNews));
+        })
+
+        return promiseChain;
+    })
+}
+
+function saveSources(sourceObject) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        const tx = db.transaction('sources', 'readwrite');
+        const sourcesStore = tx.objectStore('sources');
+
+        let allSrcObjects = { sourceId: 'allSources', data: sourceObject };
+
+        return sourcesStore.put(allSrcObjects);
+    })
+}
+
+function saveCountries(countries) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        const tx = db.transaction('countries', 'readwrite');
+        const countriesStore = tx.objectStore('countries');
+
+        let allCountriesObjects = { countryId: 'allCountries', data: countries };
+
+        return countriesStore.put(allCountriesObjects);
+    })
+}
+
+function cleanAllNewsDb(storeName, count) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        store.index('by-date').openCursor(null, 'prev').then(cursor => {
+            if (!cursor) return;
+            return cursor.advance(count);
+        }).then(function deleteExtras(cursor) {
+            if (!cursor) return;
+            cursor.delete();
+            cursor.continue().then(deleteExtras);
+        }).catch(err => {
+            debugger;
+        });
+    });
+}
+
+function cleanFilteredNewsDb(storeName, count, key, filter) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+
+        return store.index('by-date').getAll().then(news => {
+            const filteredNews = news.reverse().filter(singleNews => singleNews[key].endsWith(filter));
+            for (let i = count; i < filteredNews.length; i++) {
+                store.delete(filteredNews[i][key]);
+            }
+        })
+    });
 }
 
 function sortArticles(article1, article2) {
     const date1 = new Date(article1.publishedAt);
     const date2 = new Date(article2.publishedAt);
+
     //sort in date in descending order or by name for same date in ascending order
     if (date2 > date1) return 1;
     else if (date1 > date2) return -1;
@@ -304,6 +324,52 @@ function sortArticles(article1, article2) {
     }
 }
 
+function getJsonResponse(jsonData) {
+    return new Response(JSON.stringify(jsonData), { headers: { 'Content-Type': 'application/json' } });
+}
+
 self.addEventListener('message', event => {
     if (event.data.key == 'skipWaiting') self.skipWaiting();
+})
+
+self.addEventListener('push', event => {
+    const promiseChain = self.registration.getNotifications().then(notifications => {
+        const extraMsg = notifications.length > 0 ? ' (+' + notifications.length + ' message(s))' : '';
+        const title = 'LATEST HEADLINE ' + extraMsg;
+        const article = event.data.json();
+        const options = {
+            body: article.title,
+            icon: 'Headlines/src/assets/images/headlines.ico',
+            image: article.urlToImage,
+            vibrate: [500, 100, 400, 80, 300, 80, 200, 60, 100, 50, 80],
+            tag: 'newsNotiification',
+            actions: [{ action: 'open', title: 'OPEN', icon: 'Headlines/src/assets/images/headlines.ico' },
+                { action: 'dismiss', title: 'DISMISS', icon: 'Headlines/src/assets/images/headlinesRed.jpg' }]
+        }
+
+        return self.registration.showNotification(title, options);
+    })
+
+    event.waitUntil(promiseChain);
+})
+
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    if (event.action === 'dismiss') {
+        return;
+    }
+    const urlToOpen = self.location.origin + '/';     //new URL('localhost:1337', self.location.origin).href;
+    const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
+        for (const myClient of myClients) {
+            if (myClient.url === urlToOpen) {
+                return myClient.focus().then(val => {
+                    return myClient.postMessage({ key: 'refresh' });
+                })
+            }
+        }
+
+        return clients.openWindow(urlToOpen);
+    })
+
+    event.waitUntil(promiseChain);
 })

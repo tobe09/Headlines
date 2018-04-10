@@ -91,7 +91,7 @@ function showSourcesAsync() {
 function handleCountryChange(countryCode, countryName) {
     basicMsg("Loading...");
     $("#sourcesList").prop('selectedIndex', 0);
-    
+
     if (countryCode === 'All') {
         displayFilterValues('ALL', '');
         showAllNewsAsync();
@@ -105,7 +105,7 @@ function handleCountryChange(countryCode, countryName) {
             errorMsg(filteredNews.Error);
             return;
         }
-        
+
         lastNewsUrl = filteredNews[0].url;
         lastNewsTime = new Date(filteredNews[0].publishedAt);
         lastNewsCode = countryCode;
@@ -133,7 +133,7 @@ function handleSourceChange(sourceCode, sourceName) {
             errorMsg(filteredNews.Error);
             return;
         }
-        
+
         lastNewsUrl = filteredNews[0].url;
         lastNewsTime = new Date(filteredNews[0].publishedAt);
         lastNewsCode = sourceCode;
@@ -149,7 +149,7 @@ function displayFilterValues(type, name) {
     if (name.length > 20) {
         const nameArr = name.split(' ');
         name = '';
-        for (let count = 0;count<nameArr.length; count++) {
+        for (let count = 0; count < nameArr.length; count++) {
             if ((name + nameArr[count]).length > 20) break;
             name += ' ' + nameArr[count];
         }
@@ -182,6 +182,7 @@ function displayMsg(divMsg, msg) {
     divMsg.css("display", "block");
     divMsg.text(msg);
 }
+
 
 function hideMsg(divMsg = $('#divMsg')) {
     divMsg.css("display", "none");
@@ -317,10 +318,10 @@ function socketConnect() {
     })
 }
 
-function updateNews(newsArr){
-    const oldHtml=$('#newsContent').html();
+function updateNews(newsArr) {
+    const oldHtml = $('#newsContent').html();
     const newHtml = getAllHtmlContent(newsArr);
-    const updNewsHtml=newHtml+oldHtml;
+    const updNewsHtml = newHtml + oldHtml;
     $('#newsContent').html(updNewsHtml);
 
     updateMsg(newsArr.length);
@@ -348,6 +349,8 @@ function notificationSetup() {
     setNotifState(Notification.permission);
 
     $('#btnNotifYes').on('change', function () {
+        //disableNotifBtns();
+
         askPermission().then(result => {
             if (result === 'granted') return subscribeUserToPush();
             return result;
@@ -361,16 +364,20 @@ function notificationSetup() {
                 unsubscribePushNotif();
                 notifSelectOff();
                 errorMsg("Live news subscription failed");
-            })
+            });
+            //.then(() => enableNotifBtns());
     });
 
     $('#btnNotifNo').on('change', function () {
+        //disableNotifBtns();
+
         unsubscribePushNotif()
             .then(val => successMsg("Live news successfully unsubscribed"))
             .catch(err => {
                 notifSelectOn();
                 errorMsg("Live news unsubscription failed");
-            })
+            });
+            //.then(() => enableNotifBtns());
     })
 }
 
@@ -383,15 +390,29 @@ function hideNotifDiv() {
     $('.notifDiv').css('display', 'none');
 }
 
+
 function notifSelectOn() {
     $('#notifYes').addClass('focus active');
     $('#notifNo').removeClass('focus active');
 }
 
+
 function notifSelectOff() {
     $('#notifNo').addClass('focus active');
     $('#notifYes').removeClass('focus active');
 }
+
+
+function disableNotifBtns() {
+    $("#btnNotifYes").attr("disabled", true);
+    $("#btnNotifNo").attr("disabled", true);
+}
+
+function enableNotifBtns() {
+    $("#btnNotifYes").attr("disabled", false);
+    $("#btnNotifNo").attr("disabled", false);
+}
+
 
 function setNotifState(result) {
     if (result === 'granted' || result === 'default') {
@@ -449,7 +470,7 @@ function sendSubscriptionToServer(pushSubscription) {
 
 function getSubscription() {
     return navigator.serviceWorker.ready.then(reg => {
-       return reg.pushManager.getSubscription()
+        return reg.pushManager.getSubscription()
     });
 }
 

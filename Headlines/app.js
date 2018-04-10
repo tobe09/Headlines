@@ -39,11 +39,12 @@ io.sockets.on('connection', socket => {
     mySocket = socket;
 });
 
-io.sockets.on('disconnection', socket => {
+io.sockets.on('disconnected', socket => {
     console.log('client disconnected: ' + socket.id);
 });
 
 setSubscr((newsArr,code)=>{
     if (!mySocket) return;
     mySocket.emit('updatedNews', newsArr, code);
+    mySocket.on('disconnect', () => mySocket.emit('disconnected'));
 });

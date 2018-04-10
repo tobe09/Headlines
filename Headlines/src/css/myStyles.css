@@ -28,6 +28,7 @@ header h1{
     position:sticky;
     top:0;
     z-index:1;
+    margin-bottom:50px;
 }
 
 .footer{
@@ -52,13 +53,10 @@ select{
     background-color:wheat;
 }
 
-#notifSelect{
-    width:80px;
-}
-
 .update-sw {
     display: none;
-    max-width: 220px;
+    width: 150px;
+    height:70px;
     color: white;
     background-color: darkslategray;
     padding: 5px;
@@ -75,6 +73,18 @@ select{
     background-color:white;
     padding-bottom:12px;
 }
+
+.notifText{
+    padding:10px;
+    font-size:18px;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    color:aqua;
+}
+
+.notifDiv{
+    float:left;
+    margin-top:5px;
+}
  
 #newsContent{
     margin-top:0px;
@@ -85,9 +95,19 @@ select{
     }
  
 #newsContent img{
-   width:100px;
-   height:100px;
+   width:150px;
+   height:150px;
 }
+
+    #newsContent .href {
+        margin-top:10px;
+        order: 1;
+    }
+
+    #newsContent a {
+        font-style:italic;
+        font-weight:bold;
+    }
 
 aside {
     border: 3px;
@@ -230,9 +250,18 @@ aside {
     #divMsg {
         font-size: 18px;
     }
+
+    #newsContent .href {
+        margin-top:0px;
+        order: 0;
+    }
+
+    .heading{
+        margin-bottom:0px;
+    }
 }
 
-@media screen and (min-width:768px) and (max-width:950px){
+@media screen and (min-width:768px) and (max-width:952px){
     aside ul {
         padding-left: 10px;
         font-size: 16px;

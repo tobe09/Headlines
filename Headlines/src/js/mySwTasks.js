@@ -11,6 +11,7 @@
         })
     }
 
+
     _trackInstalling(worker) {
         worker.addEventListener('statechange', () => {
             if (worker.state === 'installed') {
@@ -18,6 +19,7 @@
             }
         });
     }
+
 
     regServiceWorker() {
         if (!navigator.serviceWorker) return

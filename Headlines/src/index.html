@@ -52,9 +52,9 @@
                             </div>
                         </div>
                         <div class="col-sm-12 col-md-2 offset-md-1 text-center">
-                            <div class="notifDiv">
+                            <!--<div class="notifDiv">
                                 Recieve Live News? <br /> <select id="notifSelect"><option value="yes">Yes</option><option value="no">No</option></select>
-                            </div>
+                            </div>-->
                             <div class="update-sw">
                                 <span>Update App?<br /> </span>
                                 <button id="btnYes" class="float-left update-btn btn-success">Yes</button>
@@ -112,7 +112,7 @@
                             <div class="col-sm-12 info-desc">
                                 <div class="container">
                                     <div class="row">
-                                        <div class="col-sm-12 col-md-2 text-center">
+                                        <div class="col-sm-12 col-md-2 text-center href">
                                             <a href="#">View in site</a>
                                         </div>
                                         <div class="col-sm-12 col-md-10">
@@ -191,6 +191,17 @@
             <div class="col">
                 <div class="footer">
                     <footer>
+                        <div class="notifDiv">
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <span class="notifText">Get Live news?</span>
+                                <label id="notifYes" class="btn btn-secondary">
+                                    <input type="radio" name="options" id="btnNotifYes" autocomplete="off"> Yes
+                                </label>
+                                <label id="notifNo" class="btn btn-secondary notifNo">
+                                    <input type="radio" name="options" id="btnNotifNo" autocomplete="off"> No
+                                </label>
+                            </div>
+                        </div>
                         <p>
                             <h6>
                                 <span class="white">2018- TCee News</span>

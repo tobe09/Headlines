@@ -48,13 +48,14 @@ router.get('/sw.js', function (req, res) {
 //get all news
 router.get('/sw/allNews', function (req, res) {
     const pageSize = 30;
-    const newsApiUrl = 'https://newsapi.org/v2/top-headlines?country=ng&pageSize=' + pageSize + '&apiKey=' + newsApiKey; //top-headlines
+    const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=ng&pageSize=' + pageSize + '&apiKey=' + newsApiKey; //top-headlines
 
     fetch(newsApiUrl).then(response => {
         response.json().then(jsonData => {
-            jsonData.articles.sort(sortArticles)
-            notifySubscr(jsonData.articles,'all');
-            res.json(jsonData.articles);        //send response back to client
+            const articles = jsonData.articles;
+            articles.sort(sortArticles)
+            notifySubscr(articles,'all');
+            res.json(articles);             //send response back to client
         })
     }).catch(err => {
         res.json({ Error: "Network Connection error occured while fetching news from the api" });
@@ -111,7 +112,7 @@ router.get('/sw/countries', function (req, res) {
 //get news filtered by source
 router.get('/sw/bySource/:sourceCode', function (req, res) {
     const sourceCode = req.params.sourceCode;
-    const bySoruceUrl = 'https://newsapi.org/v2/top-headlines?sources=' + sourceCode + '&apiKey=' + newsApiKey;
+    const bySoruceUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&sources=' + sourceCode + '&apiKey=' + newsApiKey;
 
     fetch(bySoruceUrl).then(response => {
         response.json().then(jsonData => {
@@ -134,7 +135,7 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
 //get news filtered by country
 router.get('/sw/byCountry/:countryCode', function (req, res) {
     const countryCode = req.params.countryCode;
-    const byCountryUrl = 'https://newsapi.org/v2/top-headlines?country=' + countryCode + '&apiKey=' + newsApiKey;
+    const byCountryUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode + '&apiKey=' + newsApiKey;
 
     fetch(byCountryUrl).then(response => {
         response.json().then(jsonData => {

@@ -1,10 +1,11 @@
 ﻿self.importScripts('Headlines/node_modules/idb/lib/idb.js');
 
-const newCache = 'headlines-static-v3';
+
+const newCache = 'headlines-static-4';
 const imgCache = 'headlines-content-imgs';
 const allCaches = [newCache, imgCache];
 
-//install setup
+
 self.addEventListener('install', event => {
     const urlToCache = [
         '/',
@@ -29,6 +30,7 @@ self.addEventListener('install', event => {
     })());
 })
 
+
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
@@ -40,6 +42,7 @@ self.addEventListener('activate', event => {
         })
     );
 });
+
 
 self.addEventListener('fetch', (event) => {
     let requestUrl = new URL(event.request.url);
@@ -66,6 +69,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request));
 })
 
+
 function dbPromise() {
     let newDbVersion = 4;
     return idb.open('headline', newDbVersion, upgradeDb => {
@@ -85,6 +89,7 @@ function dbPromise() {
         }
     });
 }
+
 
 function getAllNews() {
     return dbPromise().then(db => {
@@ -106,9 +111,7 @@ function getAllNews() {
 
                 saveNews('allNews', articles).then(() => {
                     cleanAllNewsDb('allNews', 30)
-                }).catch(err => {
-                    debugger;
-                });
+                })
 
                 return getJsonResponse(articles);
             })
@@ -117,6 +120,7 @@ function getAllNews() {
         });
     }
 };
+
 
 function getCountries() {
     return dbPromise().then(db => {
@@ -142,6 +146,7 @@ function getCountries() {
     }
 }
 
+
 function getSources() {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveSources();
@@ -166,6 +171,7 @@ function getSources() {
         });
     }
 }
+
 
 function getByCountry(path) {
     const pathInfo = path.split('/')
@@ -199,6 +205,7 @@ function getByCountry(path) {
         });
     }
 }
+
 
 function getBySource(path) {
     const pathInfo = path.split('/')
@@ -234,6 +241,7 @@ function getBySource(path) {
     }
 }
 
+
 function saveNews(storeName, news) {
     return dbPromise().then(db => {
         if (!db) return;
@@ -251,6 +259,7 @@ function saveNews(storeName, news) {
     })
 }
 
+
 function saveSources(sourceObject) {
     return dbPromise().then(db => {
         if (!db) return;
@@ -263,6 +272,7 @@ function saveSources(sourceObject) {
         return sourcesStore.put(allSrcObjects);
     })
 }
+
 
 function saveCountries(countries) {
     return dbPromise().then(db => {
@@ -277,6 +287,7 @@ function saveCountries(countries) {
     })
 }
 
+
 function cleanAllNewsDb(storeName, count) {
     return dbPromise().then(db => {
         if (!db) return;
@@ -290,11 +301,10 @@ function cleanAllNewsDb(storeName, count) {
             if (!cursor) return;
             cursor.delete();
             cursor.continue().then(deleteExtras);
-        }).catch(err => {
-            debugger;
-        });
+        })
     });
 }
+
 
 function cleanFilteredNewsDb(storeName, count, key, filter) {
     return dbPromise().then(db => {
@@ -312,6 +322,7 @@ function cleanFilteredNewsDb(storeName, count, key, filter) {
     });
 }
 
+
 function sortArticles(article1, article2) {
     const date1 = new Date(article1.publishedAt);
     const date2 = new Date(article2.publishedAt);
@@ -324,13 +335,16 @@ function sortArticles(article1, article2) {
     }
 }
 
+
 function getJsonResponse(jsonData) {
     return new Response(JSON.stringify(jsonData), { headers: { 'Content-Type': 'application/json' } });
 }
 
+
 self.addEventListener('message', event => {
     if (event.data.key == 'skipWaiting') self.skipWaiting();
 })
+
 
 self.addEventListener('push', event => {
     const promiseChain = self.registration.getNotifications().then(notifications => {
@@ -340,7 +354,7 @@ self.addEventListener('push', event => {
         const options = {
             body: article.title,
             icon: 'Headlines/src/assets/images/headlines.ico',
-            image: article.urlToImage,
+            image: article.urlToImage || 'Headlines/src/assets/images/noImage.png',
             vibrate: [500, 100, 400, 80, 300, 80, 200, 60, 100, 50, 80],
             tag: 'newsNotiification',
             actions: [{ action: 'open', title: 'OPEN', icon: 'Headlines/src/assets/images/headlines.ico' },
@@ -352,6 +366,7 @@ self.addEventListener('push', event => {
 
     event.waitUntil(promiseChain);
 })
+
 
 self.addEventListener('notificationclick', event => {
     event.notification.close();

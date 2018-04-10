@@ -19,7 +19,9 @@
     });
 })
 
-let lastNewsUrl, lastNewsCode;
+
+let lastNewsUrl, lastNewsCode, lastNewsTime;
+
 
 function showAllNewsAsync() {
     dataApi('GET', 'sw/allNews').then(allNews => {
@@ -27,13 +29,15 @@ function showAllNewsAsync() {
             errorMsg(allNews.Error);
             return;
         }
-        
+
         lastNewsUrl = allNews[0].url;
+        lastNewsTime = new Date(allNews[0].publishedAt);
         lastNewsCode = 'all';
 
         displayNews(allNews);
     })
 }
+
 
 function displayNews(newsArr) {
     const htmlString = getAllHtmlContent(newsArr);
@@ -55,6 +59,7 @@ function showCountriesAsync() {
         countriesList.html(optionList);
     });
 }
+
 
 function showSourcesAsync() {
     dataApi('GET', 'sw/sources').then(sourceObject => {
@@ -82,6 +87,7 @@ function showSourcesAsync() {
     });
 }
 
+
 function handleCountryChange(countryCode, countryName) {
     basicMsg("Loading...");
     $("#sourcesList").prop('selectedIndex', 0);
@@ -101,11 +107,13 @@ function handleCountryChange(countryCode, countryName) {
         }
         
         lastNewsUrl = filteredNews[0].url;
+        lastNewsTime = new Date(filteredNews[0].publishedAt);
         lastNewsCode = countryCode;
 
         displayNews(filteredNews);
     });
 }
+
 
 function handleSourceChange(sourceCode, sourceName) {
     basicMsg("Loading...");
@@ -127,11 +135,13 @@ function handleSourceChange(sourceCode, sourceName) {
         }
         
         lastNewsUrl = filteredNews[0].url;
+        lastNewsTime = new Date(filteredNews[0].publishedAt);
         lastNewsCode = sourceCode;
 
         displayNews(filteredNews);
     });
 }
+
 
 function displayFilterValues(type, name) {
     $("#filterType").text(type);
@@ -149,20 +159,24 @@ function displayFilterValues(type, name) {
     $("#filterName").text(name);
 }
 
+
 function basicMsg(msg, divMsg = $('#divMsg')) {
     divMsg.css("color", "purple");
     displayMsg(divMsg, msg);
 }
+
 
 function successMsg(msg, divMsg = $('#divMsg')) {
     divMsg.css("color", "green");
     displayMsg(divMsg, msg);
 }
 
+
 function errorMsg(msg, divMsg = $('#divMsg')) {
     divMsg.css("color", "red");
     displayMsg(divMsg, msg);
 }
+
 
 function displayMsg(divMsg, msg) {
     divMsg.css("display", "block");
@@ -173,6 +187,7 @@ function hideMsg(divMsg = $('#divMsg')) {
     divMsg.css("display", "none");
 }
 
+
 function getSourceHtml(sourceObject) {
     let htmlString = '';
 
@@ -182,6 +197,7 @@ function getSourceHtml(sourceObject) {
 
     return htmlString;
 }
+
 
 function getSourceCategoryHtml(singleSrcCatgry, category) {
     let htmlString = '<p>' + toPascalCase(category) + '</p><ul>';
@@ -194,9 +210,11 @@ function getSourceCategoryHtml(singleSrcCatgry, category) {
     return htmlString;
 }
 
+
 function toPascalCase(str) {
     return str[0].toUpperCase() + str.substring(1).toLowerCase();
 }
+
 
 function getAllHtmlContent(allNews) {
     let htmlString = "";
@@ -207,6 +225,7 @@ function getAllHtmlContent(allNews) {
     return htmlString;
 }
 
+
 function getRowHtmlContent(singleNews) {
     const htmlString = '<div class="row justify-content-center single-news"> <div class="col-sm-12 col-md-4" > <img src="' + (singleNews.urlToImage || 'Headlines/src/assets/images/noImage.png') +
         '" alt="image" class="mx-3" /></div><div class="col-sm-12 col-md-8 info-headers"><div class="container"><div class="row"><div ' +
@@ -214,12 +233,13 @@ function getRowHtmlContent(singleNews) {
         '<div class="col-sm-12 col-md-4"> <strong>Author: </strong></div><div class="col-sm-12 col-md-8">' + (singleNews.author || 'Anonymous') + '</div>' +
         '<div class="col-sm-12 col-md-4"> <strong>Date Published: </strong></div><div class="col-sm-12 col-md-8">' + getResolvedDate(singleNews.publishedAt) +
         '</div><div class="col-sm-12 col-md-4"><strong>Title: </strong></div><div class="col-sm-12 col-md-8">' + singleNews.title + '</div>' +
-        '</div></div> </div> <div class="col-sm-12 info-desc"> <div class="container"> <div class="row"><div class="col-sm-12 col-md-2 text-center">' +
-        '<a href="' + singleNews.url + '" target="_blank">View in site</a> </div> <div class="col-sm-12 col-md-10"> <span>' + (singleNews.description || 'No Content') +
+        '</div></div> </div> <div class="col-sm-12 info-desc"> <div class="container"> <div class="row"><div class="col-sm-12 col-md-2 text-center href">' +
+        '<a href="' + singleNews.url + '" target="_blank">View in site</a> </div> <div class="col-sm-12 col-md-9 offset-md-1"> <span>' + (singleNews.description || 'Details available in source site') +
         '</span></div></div></div></div> </div >';
 
     return htmlString;
 }
+
 
 const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -236,6 +256,7 @@ function getResolvedDate(dateStr) {
     return `${wkDay}, ${day}${dateSuffix(day)} ${month}, ${year} &nbsp;&nbsp;&nbsp;(${hour}:${min})`;
 }
 
+
 function dateSuffix(date) {
     //set suffix according to date of the month
     if (date % 10 == 1 && date != 11) return 'st';
@@ -244,6 +265,7 @@ function dateSuffix(date) {
     else return 'th';
 }
 
+
 function getSelectOptions(options) {
     let optionsHtml = "<option value='All'>All</option>";
     for (const option of options) {
@@ -251,6 +273,7 @@ function getSelectOptions(options) {
     }
     return optionsHtml;
 }
+
 
 function dataApi(type, url, data, async = true) {
     return new Promise((resolve, reject) => {
@@ -266,7 +289,7 @@ function dataApi(type, url, data, async = true) {
 }
 
 
-//socket connection setup
+//SOCKET CONNECTION SETUP
 let socket;
 const socketInterval = setInterval(socketConnect, 20 * 1000);
 socketConnect();
@@ -288,7 +311,9 @@ function socketConnect() {
             }
         }
 
-        updateNews(newsArr);
+        if (new Date(newsArr[0].publishedAt) > lastNewsTime) {
+            updateNews(newsArr);
+        }
     })
 }
 
@@ -313,7 +338,7 @@ function updateMsg(length) {
 }
 
 
-//push notification setup
+//PUSH NOTIFICATION SETUP
 function notificationSetup() {
     if (!('PushManager' in window)) {
         hideNotifDiv()
@@ -322,33 +347,31 @@ function notificationSetup() {
 
     setNotifState(Notification.permission);
 
-    $('#notifSelect').on('change', function () {
-        if (isNotifOn()) {
-            askPermission().then(result => {
-                setNotifState(result);
-                if (result === 'granted') return subscribeUserToPush();
-                return result;
+    $('#btnNotifYes').on('change', function () {
+        askPermission().then(result => {
+            if (result === 'granted') return subscribeUserToPush();
+            return result;
+        })
+            .then(result => {
+                if (result === 'default') errorMsg("Live news subscription unsuccessful");
+                else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings.");
+                else successMsg("Live news subscription successful");
             })
-                .then(result => {
-                    if (result === 'default') errorMsg("Live news subscription unsuccessful");
-                    else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings.");
-                    else successMsg("Live news subscription successful");
-                })
-                .catch(err => {
-                    unsubscribePushNotif();
-                    notifSelectOff();
-                    errorMsg("Live news subscription failed");
-                });
-        }
-        else {
-            unsubscribePushNotif()
-                .then(val => successMsg("Live news successfully unsubscribed"))
-                .catch(err => {
-                    notifSelectOn();
-                    errorMsg("Live news unsubscription failed");
-                });
-        }
+            .catch(err => {
+                unsubscribePushNotif();
+                notifSelectOff();
+                errorMsg("Live news subscription failed");
+            })
     });
+
+    $('#btnNotifNo').on('change', function () {
+        unsubscribePushNotif()
+            .then(val => successMsg("Live news successfully unsubscribed"))
+            .catch(err => {
+                notifSelectOn();
+                errorMsg("Live news unsubscription failed");
+            })
+    })
 }
 
 function showNotifDiv() {
@@ -361,11 +384,13 @@ function hideNotifDiv() {
 }
 
 function notifSelectOn() {
-    $('#notifSelect').val('yes');
+    $('#notifYes').addClass('focus active');
+    $('#notifNo').removeClass('focus active');
 }
 
 function notifSelectOff() {
-    $('#notifSelect').val('no');
+    $('#notifNo').addClass('focus active');
+    $('#notifYes').removeClass('focus active');
 }
 
 function setNotifState(result) {
@@ -380,10 +405,6 @@ function setNotifState(result) {
             subscription ? notifSelectOn() : notifSelectOff();
         })
     });
-}
-
-function isNotifOn() {
-    return $('#notifSelect').val() === 'yes';
 }
 
 function askPermission() {
@@ -426,12 +447,14 @@ function sendSubscriptionToServer(pushSubscription) {
     return dataApi('POST', 'pushSubscriptions', pushSubscription);
 }
 
-function unsubscribePushNotif() {
+function getSubscription() {
     return navigator.serviceWorker.ready.then(reg => {
-       return reg.pushManager.getSubscription().then(subscription => {
-           return subscription.unsubscribe();
-        })
+       return reg.pushManager.getSubscription()
     });
+}
+
+function unsubscribePushNotif() {
+    return getSubscription().then(registration => registration.unsubscribe());
 }
 
 navigator.serviceWorker.addEventListener('message', event => {

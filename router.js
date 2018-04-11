@@ -3,20 +3,18 @@ const express = require("express");
 const router = express.Router();
 const fetch = require("node-fetch");
 
+
 const webPush = require('web-push');
 //const vapidKeys = webPush.generateVAPIDKeys();
 const publicKey = 'BJbGel5u8l_RfmWqO1yW-Hshdo4HfLCS8FlNMx0rBVIEBOR2a3h_NDbw4EGvJfv_vKdAhFrq5NdG1Q3JLT5Ux4o'; //vapidKeys.publicKey; 
 const privateKey = 'U0WDz_q16h5ZMxrqI-zt3j0sTPqi0oLaBA17cudMMZw'; //vapidKeys.privateKey;
 webPush.setVapidDetails('mailto:chineketobenna@gmail.com', publicKey, privateKey);
 
+
 const mongoose = require('mongoose');
 const localAddress = 'mongodb://localhost:27017/headlinesdb';                                  //local development address
-const hostAddress = 'mongodb://tobe09:nkeody09@ds121955.mlab.com:21955/headlinesdb';             //mLab repository address
-mongoose.connect(localAddress);
-
-const dbConn = mongoose.connection;
-dbConn.on('error', console.error.bind(console, 'connection error:'));
-dbConn.once('open', () => console.log('Connected to mongo db server'));
+const hostAddress = 'mongodb://tobe09:nkeody09@ds141889.mlab.com:41889/headlinesdb';             //mLab repository address
+mongoose.connect(hostAddress);
 
 var uniqueValidator = require('mongoose-unique-validator');
 const pushSubSchema = mongoose.Schema;
@@ -26,7 +24,15 @@ const pushSubDoc = new pushSubSchema({
 }).plugin(uniqueValidator);
 const PushSubModel = mongoose.model('push_subscriptions', pushSubDoc);
 
+
+const dbConn = mongoose.connection;
+dbConn.on('error', console.error.bind(console, 'connection error:'));
+dbConn.once('open', () => console.log('Connected to mongo db server'));
+
+
+
 const newsApiKey = '11bae20ea48e474890528e504ea733e2';
+
 
 //to locate application files (relative to application root)
 const path = require('path');
@@ -154,14 +160,18 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
     });
 });
 
+
 function sortArticles(article1, article2) {
     const date1 = new Date(article1.publishedAt);
     const date2 = new Date(article2.publishedAt);
+
     //sort in descending order
     if (date2 > date1) return 1;
     else if (date1 > date2) return -1;
     else {
-        return article1.source.name.localeCompare(article2.source.name);
+        const compareInt = article1.source.name.localeCompare(article2.source.name);
+        if (compareInt !== 0) return compareInt;
+        return article1.author.localeCompare(article2.author);
     }
 }
 
@@ -178,6 +188,7 @@ router.post('/pushSubscriptions', function (req, res) {
         else res.json({ Error: '' });
     })
 })
+
 
 //to send other files/data from the server
 router.get('*', function (req, res) {
@@ -215,6 +226,7 @@ const newsUpdateInterval = setInterval(() => {
 
 }, 5 * 60 * 1000);
 
+
 function sendPushMsg(id, subscription, article) {
     webPush.sendNotification(subscription, JSON.stringify(article)).catch(err => {
         if (err || err.statusCode === 404 || err.statusCode === 410) {
@@ -223,22 +235,28 @@ function sendPushMsg(id, subscription, article) {
     });
 }
 
+
 function deleteSubFromDb(id) {
     PushSubModel.findByIdAndRemove(id, (err, val) => { });
 }
 
+
+
 //for socket publishing
 const newsSubsc=[];
+
 
 function setSubscr(handler){
     newsSubsc.push(handler); 
 }
+
 
 function notifySubscr(newsArr, code){
     for(const handler of newsSubsc){
         handler(newsArr, code);
     }
 }
+
 
 
 module.exports = {

@@ -2,16 +2,17 @@
 const app = express();
 const socketIo = require("socket.io");
 
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const port = process.env.port || 3000;
 
 const router = require('./src/router.js').router;
 app.use('/', router);
 
-const setSubscr = require('./src/router.js').setSubscr;
+
+const setSubscr = require('./src/router.js').setSubscr;     //subscribe a method to be notified by socket of new articles
 
 
 //const https = require('https');
@@ -27,14 +28,18 @@ const setSubscr = require('./src/router.js').setSubscr;
 //
 //const server = https.createServer(options, app);
 
+const port = process.env.port || 3000;
+
 const svr = app.listen(port, function () {
     console.log('Server now running on port: ' + svr.address().port);
 });
+
 
 const io = socketIo.listen(svr);
 const serverSocket = io.sockets;
 let clientSocket;
 let connections = 0;
+
 
 serverSocket.on('connection', clntSocket => {
     connections++;
@@ -42,10 +47,13 @@ serverSocket.on('connection', clntSocket => {
     clientSocket = clntSocket;
 });
 
-serverSocket.on('clientDisconnected', id => {
-    console.log('client disconnected: ' + id + '    (' + connections + ' connection(s))');
-});
 
+//serverSocket.on('clientDisconnected', id => {
+//    console.log('client disconnected: ' + id + '    (' + connections + ' connection(s))');
+//});
+
+
+//add a handler for news notifications
 setSubscr((newsArr,code)=>{
     if (!clientSocket) return;
 
@@ -53,7 +61,7 @@ setSubscr((newsArr,code)=>{
 
     clientSocket.on('disconnect', msg => {
         connections--;
-        serverSocket.emit('clientDisconnected', clientSocket.id);
         console.log('client disconnected: ' + clientSocket.id + '    (' + connections + ' connection(s))');
+        //serverSocket.emit('clientDisconnected', clientSocket.id);
     });
 });

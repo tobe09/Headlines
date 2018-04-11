@@ -31,20 +31,28 @@ const svr = app.listen(port, function () {
     console.log('Server now running on port: ' + svr.address().port);
 });
 
-const io=socketIo.listen(svr);
-let mySocket;
+const io = socketIo.listen(svr);
+const serverSocket = io.sockets;
+let clientSocket;
+let connections = 0;
 
-io.sockets.on('connection', socket => {
-    console.log('client connected: ' + socket.id);
-    mySocket = socket;
+serverSocket.on('connection', clntSocket => {
+    connections++;
+    console.log('client connected: ' + clntSocket.id + '(' + connections + 'connection(s))');
+    clientSocket = clntSocket;
 });
 
-io.sockets.on('disconnected', socket => {
-    console.log('client disconnected: ' + socket.id);
+serverSocket.on('clientDisconnected', id => {
+    console.log('client disconnected: ' + id + '(' + connections + 'connection(s))');
 });
 
 setSubscr((newsArr,code)=>{
-    if (!mySocket) return;
-    mySocket.emit('updatedNews', newsArr, code);
-    mySocket.on('disconnect', () => mySocket.emit('disconnected'));
+    if (!clientSocket) return;
+
+    clientSocket.emit('updatedNews', newsArr, code);
+
+    clientSocket.on('disconnect', msg => {
+        connections--;
+        serverSocket.emit('clientDisconnected', clientSocket.id);
+    });
 });

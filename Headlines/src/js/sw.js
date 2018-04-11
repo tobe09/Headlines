@@ -4,7 +4,7 @@
 const newCache = 'headlines-static-4';
 const imgCache = 'headlines-content-imgs';
 const allCaches = [newCache, imgCache];
-
+//
 
 self.addEventListener('install', event => {
     const urlToCache = [

@@ -30,20 +30,30 @@ header h1{
     z-index:1;
 }
 
-.footer{
-    background-color:white;
+.footer-div{
     padding-bottom:10px;
     margin-top:10px;
+	background-color: darkslategray;
+	height:100%
 }
 
 footer{
     padding-top:10px;
-    padding-bottom:10px;
-    background-color: darkslategray;    
+    padding-bottom:10px; 
+}
+
+.footerInfo {
+    margin-top: 10px;
+    float: right;
 }
 
 .white{
     color:white;
+}
+
+.white small{
+    color:grey;
+    margin-left:5px;
 }
 
 select{
@@ -253,6 +263,11 @@ aside {
     #newsContent .href {
         margin-top:0px;
         order: 0;
+    }
+
+    .footerInfo {
+        margin-top: 0px;
+        float: none;
     }
 }
 

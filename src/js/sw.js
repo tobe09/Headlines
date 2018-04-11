@@ -4,7 +4,7 @@
 const newCache = 'headlines-static-4';
 const imgCache = 'headlines-content-imgs';
 const allCaches = [newCache, imgCache];
-//
+////
 
 self.addEventListener('install', event => {
     const urlToCache = [
@@ -54,7 +54,7 @@ self.addEventListener('fetch', (event) => {
             else if (requestUrl.pathname === '/sw/sources') response = getSources();
             else if (requestUrl.pathname.startsWith('/sw/byCountry')) response = getByCountry(requestUrl.pathname);
             else if (requestUrl.pathname.startsWith('/sw/bySource')) response = getBySource(requestUrl.pathname);
-            else response = getAllNews();
+            else response = fetch(event.request);
 
             event.respondWith(response);
         }
@@ -79,11 +79,11 @@ function dbPromise() {
                 const countryNewsStore = upgradeDb.createObjectStore('countryNews', { keyPath: 'urlByCountryCode' });
                 const sourceNewsStore = upgradeDb.createObjectStore('sourceNews', { keyPath: 'urlBySourceCode' });
             case 1:
-            const sourcesStore = upgradeDb.createObjectStore('sources', { keyPath: 'sourceId' });
+                const sourcesStore = upgradeDb.createObjectStore('sources', { keyPath: 'sourceId' });
             case 2:
                 allNewsStore.createIndex('by-date', ['publishedAt', 'source.name']);
-                countryNewsStore.createIndex('by-date', ['publishedAt', 'source.name']);
-                sourceNewsStore.createIndex('by-date', ['publishedAt', 'source.name']);
+                countryNewsStore.createIndex('by-date', ['publishedAt', 'author']);
+                sourceNewsStore.createIndex('by-date', ['publishedAt', 'author']);
             case 3:
                 const countryStore = upgradeDb.createObjectStore('countries', { keyPath: 'countryId' });
         }
@@ -100,6 +100,7 @@ function getAllNews() {
 
         return allNewsStore.index('by-date').getAll().then(allNews => {
             const fetchSaveAllNews = fetchAndSaveAllNews();
+
             return allNews.length > 0 ? getJsonResponse(allNews.reverse()) : fetchSaveAllNews;
         });
     })
@@ -109,8 +110,8 @@ function getAllNews() {
             return response.json().then(articles => {
                 if (articles.Error) return getJsonResponse(articles);
 
-                saveNews('allNews', articles).then(() => {
-                    cleanAllNewsDb('allNews', 30)
+                saveNews('allNews', articles).then(() =>   {
+                    return cleanAllNewsDb('allNews', 30);
                 })
 
                 return getJsonResponse(articles);
@@ -130,7 +131,9 @@ function getCountries() {
         const countriesStore = tx.objectStore('countries');
 
         return countriesStore.getAll().then(allCountriesObject => {
-            return allCountriesObject.length > 0 ? getJsonResponse(allCountriesObject[0].data) : fetchAndSaveCountries();
+            const fetchSaveCountries = fetchAndSaveCountries();
+
+            return allCountriesObject.length > 0 ? getJsonResponse(allCountriesObject[0].data) : fetchSaveCountries;
         });
     })
 
@@ -138,6 +141,7 @@ function getCountries() {
         return fetch('/sw/countries').then(response => {
             return response.json().then(countries => {
                 saveCountries(countries);
+
                 return getJsonResponse(countries);
             })
         }).catch(err => {
@@ -155,12 +159,14 @@ function getSources() {
         const sourcesStore = tx.objectStore('sources');
         
         return sourcesStore.getAll().then(allSrcObjects => {
-            return allSrcObjects.length > 0 ? getJsonResponse(allSrcObjects[0].data) : fetchAndSaveSources();
+            const fetchSaveSources = fetchAndSaveSources();
+
+            return allSrcObjects.length > 0 ? getJsonResponse(allSrcObjects[0].data) : fetchSaveSources;
         });
     })
 
     function fetchAndSaveSources() {
-        return fetch(sourcesUrl).then(response => {
+        return fetch('/sw/sources').then(response => {
             return response.json().then(sourceObject => {
                 saveSources(sourceObject);
 
@@ -186,6 +192,7 @@ function getByCountry(path) {
         return countryNewsStore.index('by-date').getAll().then(countryNews => {
             const fetchSaveCountryNews = fetchAndSaveByCountry();
             const byCountryNews = countryNews.filter(singleNews => singleNews.urlByCountryCode.endsWith(countryCode));
+
             return byCountryNews.length > 0 ? getJsonResponse(byCountryNews.reverse()) : fetchSaveCountryNews;
         });
     })
@@ -195,9 +202,10 @@ function getByCountry(path) {
             return response.json().then(articles => {
                 if (articles.Error) return getJsonResponse(articles);
 
-                saveNews('countryNews', articles).then(() => {
-                    cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode)
+                saveNews('countryNews', articles).then(val =>  {
+                    return cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode);
                 });
+
                 return getJsonResponse(articles);
             })
         }).catch(error => {
@@ -220,6 +228,7 @@ function getBySource(path) {
     return sourceNewsStore.index('by-date').getAll().then(sourceNews => {
             const fetchSaveSourceNews = fetchAndSaveBySource();
             const bySourceNews = sourceNews.filter(singleNews => singleNews.urlBySourceCode.endsWith(sourceCode));
+
             return bySourceNews.length > 0 ? getJsonResponse(bySourceNews.reverse()) : fetchSaveSourceNews;
         });
     })
@@ -229,9 +238,9 @@ function getBySource(path) {
             return response.json().then(articles => {
                 if (articles.Error) return getJsonResponse(articles);
 
-                saveNews('sourceNews', articles).then(val => { 
-                    cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
-                })
+                saveNews('sourceNews', articles).then(val => {
+                    return cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
+                });
 
                 return getJsonResponse(articles);
             })
@@ -249,13 +258,9 @@ function saveNews(storeName, news) {
         const tx = db.transaction(storeName, 'readwrite');
         const newsStore = tx.objectStore(storeName);
 
-        let promiseChain = Promise.resolve();
-
         news.forEach(singleNews => {
-            promiseChain = promiseChain.then(() => newsStore.put(singleNews));
+            newsStore.put(singleNews);
         })
-
-        return promiseChain;
     })
 }
 
@@ -288,21 +293,41 @@ function saveCountries(countries) {
 }
 
 
+//issues in firefox and some other browsers due to transaction closing on promise continuation (then)//
+//function cleanAllNewsDb(storeName, count) {
+//    return dbPromise().then(db => {
+//        if (!db) return;
+
+//        const tx = db.transaction(storeName, 'readwrite');
+//        const store = tx.objectStore(storeName);
+
+//        store.index('by-date').openCursor(null, 'prev').then(cursor => {
+//            if (!cursor) return;
+//            return cursor.advance(count);
+//        }).then(function deleteExtras(cursor) {
+//            if (!cursor) return;
+//            cursor.delete();
+//            cursor.continue().then(deleteExtras);
+//        })
+//    });
+//}
+
+
 function cleanAllNewsDb(storeName, count) {
     return dbPromise().then(db => {
         if (!db) return;
 
         const tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
-        store.index('by-date').openCursor(null, 'prev').then(cursor => {
-            if (!cursor) return;
-            return cursor.advance(count);
-        }).then(function deleteExtras(cursor) {
-            if (!cursor) return;
-            cursor.delete();
-            cursor.continue().then(deleteExtras);
+
+        return store.index('by-date').getAll().then(news => {
+            const allNews = news.reverse();
+
+            for (let i = count; i < allNews.length; i++) {
+                store.delete(allNews[i]['url']);
+            }
         })
-    });
+    })
 }
 
 
@@ -314,25 +339,18 @@ function cleanFilteredNewsDb(storeName, count, key, filter) {
         const store = tx.objectStore(storeName);
 
         return store.index('by-date').getAll().then(news => {
-            const filteredNews = news.reverse().filter(singleNews => singleNews[key].endsWith(filter));
+            news=news.reverse();
+            const maxCount=1000;
+            for (let i = maxCount; i < news.length; i++) {
+                store.delete(news[i][key]);
+            }
+
+            const filteredNews = news.filter(singleNews => singleNews[key].endsWith(filter));
             for (let i = count; i < filteredNews.length; i++) {
                 store.delete(filteredNews[i][key]);
             }
         })
     });
-}
-
-
-function sortArticles(article1, article2) {
-    const date1 = new Date(article1.publishedAt);
-    const date2 = new Date(article2.publishedAt);
-
-    //sort in date in descending order or by name for same date in ascending order
-    if (date2 > date1) return 1;
-    else if (date1 > date2) return -1;
-    else {
-        return article1.source.name.localeCompare(article2.source.name);
-    }
 }
 
 

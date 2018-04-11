@@ -1,0 +1,278 @@
+﻿html, body {
+    width: 100%;
+    font-size: 17px;
+    /*background-image:url("index.jpg");
+    background-repeat:no-repeat;
+    background-size:cover;*/
+}
+
+header{    
+    background-color: darkslategray;
+    padding-top:8px;
+    padding-bottom:5px;
+}
+
+header h1{    
+    line-height:1.1em;
+}
+
+.header-label{
+    color:white
+}
+
+.header-info{
+    color:cadetblue
+}
+
+.heading{
+    position:sticky;
+    top:0;
+    z-index:1;
+}
+
+.footer{
+    background-color:white;
+    padding-bottom:10px;
+    margin-top:10px;
+}
+
+footer{
+    padding-top:10px;
+    padding-bottom:10px;
+    background-color: darkslategray;    
+}
+
+.white{
+    color:white;
+}
+
+select{
+    width:200px;
+    text-align:center;
+    background-color:wheat;
+}
+
+.update-sw {
+    display: none;
+    width: 150px;
+    height:70px;
+    color: white;
+    background-color: darkslategray;
+    padding: 5px;
+    margin-top: 10px;
+}
+
+.update-btn{
+    color:white;
+}
+
+#filters{
+    margin-top:-10px;
+    padding-top:20px;
+    background-color:white;
+    padding-bottom:12px;
+}
+
+.notifText{
+    padding:10px;
+    font-size:18px;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    color:aqua;
+}
+
+.notifDiv{
+    float:left;
+    margin-top:5px;
+}
+ 
+#newsContent{
+    margin-top:0px;
+}
+
+    #newsContent > div:first-of-type {
+        margin-top: 40px;
+    }
+ 
+#newsContent img{
+   width:150px;
+   height:150px;
+}
+
+    #newsContent .href {
+        margin-top:10px;
+        order: 1;
+    }
+
+    #newsContent a {
+        font-style:italic;
+        font-weight:bold;
+    }
+
+aside {
+    border: 3px;
+    border-color: aliceblue;
+    background-color: bisque;
+    overflow: auto;
+    min-height: calc(100% - 295px);
+    margin-top: 50px;
+    padding: 15px;
+}
+
+    aside p {
+        color:cadetblue;
+        font-size:20px;
+        margin-bottom:5px;
+    }
+
+.aside-header h4{
+    color: darkslategray;
+    margin-bottom:20px;
+    margin-top:10px;
+}
+
+.aside-header h4:hover{
+    color: green;
+    cursor:pointer;
+}
+
+.aside-source{
+    color:blue;
+}
+
+.aside-source:hover{
+    text-decoration:underline;
+    cursor:pointer;
+}
+
+.seperator{
+    margin-bottom:100px;
+}
+
+.info-headers{
+    font-size:16px;
+}
+
+.info-desc{    
+    margin-top:10px;
+    font-size:15px;
+}
+
+.info-desc  span{
+    text-align:justify;
+}
+
+.info-desc > small{
+    float:right;
+}
+
+ .info-desc a{
+     color:darkblue;
+ }
+
+.full-width{
+    width:100%;
+}
+
+.single-news{
+    background-color:cadetblue;
+    padding-top:8px;
+    padding-bottom:8px;
+    margin-top:10px;
+    color:white;
+}
+
+.filterHeader{
+    color:darkolivegreen;
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:5px;
+    display:none;
+}
+
+.filterSubHeader{
+    font-size:20px;
+}
+
+#filterType{
+    margin-right:50px;
+}
+
+#filterName{
+    font-style:italic;
+}
+
+#divMsg{
+    font-size:16px;
+    text-align:center;
+    position:fixed;
+    font-weight:500;
+    z-index:1;
+    background-color:bisque;
+    padding:5px 10px 5px 10px;
+}
+
+.attribution {
+    margin-top: -10px;
+    margin-right: 10px;
+    color:white;
+}
+
+.attribution a{
+    color:aqua;
+}
+
+@media screen and (min-width:768px) {
+    select {
+        float: left;
+    }
+
+    aside ul{
+        padding:0px 0px 0px 30px;
+    }
+
+    aside {
+        width: 20%;
+        height: calc(100% - 295px);
+        padding: 0px;
+        position: fixed;
+        margin-top:0px;
+    }
+
+    .filterHeader{
+        display:block;
+    }
+
+    .filterSources{
+        display:none;
+    }
+
+    #divMsg {
+        font-size: 18px;
+    }
+
+    #newsContent .href {
+        margin-top:0px;
+        order: 0;
+    }
+}
+
+@media screen and (min-width:768px) and (max-width:952px){
+    aside ul {
+        padding-left: 10px;
+        font-size: 16px;
+    }
+
+    aside p {
+        font-size: 18px;
+    }
+}
+
+@media screen and (min-width:992px) {
+    aside {
+        height: calc(100% - 270px);
+    }
+
+    .update-sw{
+        margin-top:0px;
+    }
+}

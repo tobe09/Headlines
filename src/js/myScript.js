@@ -1,9 +1,9 @@
 ﻿$(function () {
     basicMsg("Loading...");
 
-    showCountriesAsync();
-    showSourcesAsync();
-    showAllNewsAsync();
+    showCountries();
+    showSources();
+    showAllNews();
     notificationSetup();
 
     $('#countriesList').on('change', function () {
@@ -23,7 +23,8 @@
 let lastNewsUrl, lastNewsCode, lastNewsTime;
 
 
-function showAllNewsAsync() {
+//function to get and display all news
+function showAllNews() {
     dataApi('GET', 'sw/allNews').then(allNews => {
         if (allNews.Error != null) {
             errorMsg(allNews.Error);
@@ -39,6 +40,7 @@ function showAllNewsAsync() {
 }
 
 
+//function to display generated news
 function displayNews(newsArr) {
     const htmlString = getAllHtmlContent(newsArr);
     $('#newsContent').html(htmlString)
@@ -46,7 +48,9 @@ function displayNews(newsArr) {
     successMsg("Number of records: " + newsArr.length);
 }
 
-function showCountriesAsync() {
+
+//function to show countries available
+function showCountries() {
     dataApi('GET', 'sw/countries').then(countries => {
         if (countries.Error != null) {
             errorMsg(countries.Error);
@@ -61,7 +65,8 @@ function showCountriesAsync() {
 }
 
 
-function showSourcesAsync() {
+//function to show sources available
+function showSources() {
     dataApi('GET', 'sw/sources').then(sourceObject => {
         if (sourceObject.Error != null) {
             errorMsg(sourceObject.Error);
@@ -73,28 +78,35 @@ function showSourcesAsync() {
         const htmlString = getSourceHtml(sourceObject);
         $('#asideSources').html(htmlString);
 
-        //for source select list
-        let sourcesList = $('#sourcesList');
-        let sources = [];
-        for (const category in sourceObject) {
-            for (const source of sourceObject[category]) sources.push(source);
-        }
-
-        sources.sort((source1, source2) => source1[1].toLowerCase().localeCompare(source2[1].toLowerCase()));
-
-        const optionList = getSelectOptions(sources);
-        sourcesList.html(optionList);
+        generateSourceList(sourceObject);
     });
 }
 
 
+//function to generate select list of sources
+function generateSourceList(sourceObject) {
+    let sourcesList = $('#sourcesList');
+    let sources = [];
+
+    for (const category in sourceObject) {
+        for (const source of sourceObject[category]) sources.push(source);
+    }
+
+    sources.sort((source1, source2) => source1[1].toLowerCase().localeCompare(source2[1].toLowerCase()));
+
+    const optionList = getSelectOptions(sources);
+    sourcesList.html(optionList);
+}
+
+
+//function to handle change in country selected
 function handleCountryChange(countryCode, countryName) {
     basicMsg("Loading...");
     $("#sourcesList").prop('selectedIndex', 0);
 
     if (countryCode === 'All') {
         displayFilterValues('ALL', '');
-        showAllNewsAsync();
+        showAllNews();
         return;
     }
 
@@ -115,6 +127,7 @@ function handleCountryChange(countryCode, countryName) {
 }
 
 
+//function to handle change in source selected
 function handleSourceChange(sourceCode, sourceName) {
     basicMsg("Loading...");
     $("#countriesList").prop('selectedIndex', 0);
@@ -122,7 +135,7 @@ function handleSourceChange(sourceCode, sourceName) {
 
     if (sourceCode === 'All') {
         displayFilterValues('ALL', '');
-        showAllNewsAsync();
+        showAllNews();
         return;
     }
 
@@ -143,6 +156,7 @@ function handleSourceChange(sourceCode, sourceName) {
 }
 
 
+//function to display filtering constraints for articles
 function displayFilterValues(type, name) {
     $("#filterType").text(type);
 
@@ -189,6 +203,7 @@ function hideMsg(divMsg = $('#divMsg')) {
 }
 
 
+//function to get sources as html string
 function getSourceHtml(sourceObject) {
     let htmlString = '';
 
@@ -200,6 +215,7 @@ function getSourceHtml(sourceObject) {
 }
 
 
+//helper function to generate each source html
 function getSourceCategoryHtml(singleSrcCatgry, category) {
     let htmlString = '<p>' + toPascalCase(category) + '</p><ul>';
 
@@ -212,11 +228,13 @@ function getSourceCategoryHtml(singleSrcCatgry, category) {
 }
 
 
+//function to convert a string to UpperCamelCase
 function toPascalCase(str) {
     return str[0].toUpperCase() + str.substring(1).toLowerCase();
 }
 
 
+//function to get html string from news articles
 function getAllHtmlContent(allNews) {
     let htmlString = "";
     for (const singleNews of allNews) {
@@ -227,6 +245,7 @@ function getAllHtmlContent(allNews) {
 }
 
 
+//helper function to generate html string for each news article
 function getRowHtmlContent(singleNews) {
     const htmlString = '<div class="row justify-content-center single-news"> <div class="col-sm-12 col-md-4" > <img src="' + (singleNews.urlToImage || 'Headlines/src/assets/images/noImage.png') +
         '" alt="image" class="mx-3" /></div><div class="col-sm-12 col-md-8 info-headers"><div class="container"><div class="row"><div ' +
@@ -242,6 +261,7 @@ function getRowHtmlContent(singleNews) {
 }
 
 
+//function to generate a properly formatted date
 const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function getResolvedDate(dateStr) {
@@ -258,6 +278,7 @@ function getResolvedDate(dateStr) {
 }
 
 
+//helper function to append the correct suffix to a date
 function dateSuffix(date) {
     //set suffix according to date of the month
     if (date % 10 == 1 && date != 11) return 'st';
@@ -267,6 +288,7 @@ function dateSuffix(date) {
 }
 
 
+//function to generate a select list
 function getSelectOptions(options) {
     let optionsHtml = "<option value='All'>All</option>";
     for (const option of options) {
@@ -276,6 +298,7 @@ function getSelectOptions(options) {
 }
 
 
+//function to make ajax calls and return a promise which resolve to the needed information
 function dataApi(type, url, data, async = true) {
     return new Promise((resolve, reject) => {
         $.ajax({
@@ -295,8 +318,11 @@ let socket;
 const socketInterval = setInterval(socketConnect, 20 * 1000);
 socketConnect();
 
+
+//function to create a socket connection when one exists
 function socketConnect() {
-    socket = io.connect('http://localhost:1337');
+    const address = 'http://localhost:1337';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
+    socket = io.connect(address);
     if (!socket) return;
     else clearInterval(socketInterval);
 
@@ -318,6 +344,8 @@ function socketConnect() {
     })
 }
 
+
+//function to display updated news
 function updateNews(newsArr) {
     const oldHtml = $('#newsContent').html();
     const newHtml = getAllHtmlContent(newsArr);
@@ -327,6 +355,8 @@ function updateNews(newsArr) {
     updateMsg(newsArr.length);
 }
 
+
+//function to update the number of records being displayed
 function updateMsg(length) {
     const oldMsg = $('#divMsg').text();
     const oldMsgArr = oldMsg.split(' ');
@@ -349,6 +379,8 @@ function notificationSetup() {
     setNotifState(Notification.permission);
 
     $('#btnNotifYes').on('change', function () {
+        if (isNotifEnabled()) return;
+
         //disableNotifBtns();
 
         askPermission().then(result => {
@@ -369,6 +401,8 @@ function notificationSetup() {
     });
 
     $('#btnNotifNo').on('change', function () {
+        if (!isNotifEnabled()) return;
+
         //disableNotifBtns();
 
         unsubscribePushNotif()
@@ -381,6 +415,7 @@ function notificationSetup() {
     })
 }
 
+
 function showNotifDiv() {
     $('.notifDiv').css('display', 'block');
 }
@@ -390,6 +425,9 @@ function hideNotifDiv() {
     $('.notifDiv').css('display', 'none');
 }
 
+function isNotifEnabled() {
+    return $('#notifYes').hasClass('focus active');
+}
 
 function notifSelectOn() {
     $('#notifYes').addClass('focus active');
@@ -414,6 +452,7 @@ function enableNotifBtns() {
 }
 
 
+//function to set the notification state of the client
 function setNotifState(result) {
     if (result === 'granted' || result === 'default') {
         showNotifDiv();
@@ -421,13 +460,14 @@ function setNotifState(result) {
     else if (result === 'denied') {
         hideNotifDiv();
     }
-    navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(subscription => {
-            subscription ? notifSelectOn() : notifSelectOff();
-        })
-    });
+
+    getPushSubscription().then(subscription => {
+        subscription ? notifSelectOn() : notifSelectOff();
+    })
 }
 
+
+//function to ask for permission for subscriptions
 function askPermission() {
     return new Promise((resolve, reject) => {
         const permissionResult = Notification.requestPermission(result => resolve(result));
@@ -435,6 +475,8 @@ function askPermission() {
     })
 }
 
+
+//function to subscribe a user to push notifications
 function subscribeUserToPush() {
     return navigator.serviceWorker.ready.then(reg => {
         const subscriptionOptions = {
@@ -448,6 +490,8 @@ function subscribeUserToPush() {
     })
 }
 
+
+//function to convert a base 64 url value to base 8 array
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
@@ -464,20 +508,28 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
+
+//function to send user subscription to the server for persistence
 function sendSubscriptionToServer(pushSubscription) {
     return dataApi('POST', 'pushSubscriptions', pushSubscription);
 }
 
-function getSubscription() {
+
+//function to get the subscription state of the client
+function getPushSubscription() {
     return navigator.serviceWorker.ready.then(reg => {
         return reg.pushManager.getSubscription()
     });
 }
 
+
+//function to unsubscribe a user from push notifications
 function unsubscribePushNotif() {
-    return getSubscription().then(registration => registration.unsubscribe());
+    return getPushSubscription().then(registration => registration.unsubscribe());
 }
 
+
+//function to listen to message events from the service worker
 navigator.serviceWorker.addEventListener('message', event => {
     if (event.data.key === 'refresh') {
         window.location.reload(true);

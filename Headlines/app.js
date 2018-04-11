@@ -38,12 +38,12 @@ let connections = 0;
 
 serverSocket.on('connection', clntSocket => {
     connections++;
-    console.log('client connected: ' + clntSocket.id + '(' + connections + 'connection(s))');
+    console.log('client connected: ' + clntSocket.id + '    (' + connections + ' connection(s))');
     clientSocket = clntSocket;
 });
 
 serverSocket.on('clientDisconnected', id => {
-    console.log('client disconnected: ' + id + '(' + connections + 'connection(s))');
+    console.log('client disconnected: ' + id + '    (' + connections + ' connection(s))');
 });
 
 setSubscr((newsArr,code)=>{
@@ -54,5 +54,6 @@ setSubscr((newsArr,code)=>{
     clientSocket.on('disconnect', msg => {
         connections--;
         serverSocket.emit('clientDisconnected', clientSocket.id);
+        console.log('client disconnected: ' + clientSocket.id + '    (' + connections + ' connection(s))');
     });
 });

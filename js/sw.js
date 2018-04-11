@@ -1,11 +1,12 @@
-﻿self.importScripts('Headlines/node_modules/idb/lib/idb.js');
+﻿self.importScripts('Headlines/node_modules/idb/lib/idb.js');            //import indexed db promise file
 
 
-const newCache = 'headlines-static-4';
+const newCache = 'headlines-static-3';
 const imgCache = 'headlines-content-imgs';
 const allCaches = [newCache, imgCache];
-////
 
+
+//handles install event of service worker
 self.addEventListener('install', event => {
     const urlToCache = [
         '/',
@@ -25,12 +26,15 @@ self.addEventListener('install', event => {
     ];
 
     event.waitUntil((function () {
-        return caches.open(newCache).then(cache => cache.addAll(urlToCache))
-            .then(() => caches.open(imgCache)).then(cache => cache.addAll(imgToCache));
+        return caches.open(newCache)
+            .then(cache => cache.addAll(urlToCache))
+            .then(() => caches.open(imgCache))
+            .then(cache => cache.addAll(imgToCache));
     })());
 })
 
 
+//handles activate event of service worker
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
@@ -44,6 +48,7 @@ self.addEventListener('activate', event => {
 });
 
 
+//handles fetch event of service worker
 self.addEventListener('fetch', (event) => {
     let requestUrl = new URL(event.request.url);
     if (requestUrl.origin === location.origin) {
@@ -70,8 +75,9 @@ self.addEventListener('fetch', (event) => {
 })
 
 
+//returns a promise that resolves to an idb promise database
 function dbPromise() {
-    let newDbVersion = 4;
+    let newDbVersion = 3;
     return idb.open('headline', newDbVersion, upgradeDb => {
         switch (upgradeDb.oldVersion) {
             case 0:
@@ -80,17 +86,17 @@ function dbPromise() {
                 const sourceNewsStore = upgradeDb.createObjectStore('sourceNews', { keyPath: 'urlBySourceCode' });
             case 1:
                 const sourcesStore = upgradeDb.createObjectStore('sources', { keyPath: 'sourceId' });
+                const countryStore = upgradeDb.createObjectStore('countries', { keyPath: 'countryId' });
             case 2:
-                allNewsStore.createIndex('by-date', ['publishedAt', 'source.name']);
+                allNewsStore.createIndex('by-date', ['publishedAt', 'source.name', 'author']);
                 countryNewsStore.createIndex('by-date', ['publishedAt', 'author']);
                 sourceNewsStore.createIndex('by-date', ['publishedAt', 'author']);
-            case 3:
-                const countryStore = upgradeDb.createObjectStore('countries', { keyPath: 'countryId' });
         }
     });
 }
 
 
+//returns all news from idb/network and saves new articles
 function getAllNews() {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveAllNews();
@@ -123,6 +129,7 @@ function getAllNews() {
 };
 
 
+//returns all countries from idb/network and saves countries (to account for changes)
 function getCountries() {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveSources();
@@ -139,10 +146,12 @@ function getCountries() {
 
     function fetchAndSaveCountries() {
         return fetch('/sw/countries').then(response => {
-            return response.json().then(countries => {
-                saveCountries(countries);
+            return response.json().then(countriesObject => {
+                if (countriesObject.Error) return getJsonResponse(countriesObject);
 
-                return getJsonResponse(countries);
+                saveValues('countries', countriesObject, 'countryId', 'allCountries');
+
+                return getJsonResponse(countriesObject);
             })
         }).catch(err => {
             return getJsonResponse({ Error: "Network Connection error occured while fetching countries from the server" });
@@ -151,6 +160,7 @@ function getCountries() {
 }
 
 
+//returns all sources from idb/network and saves sources (to account for changes)
 function getSources() {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveSources();
@@ -168,7 +178,9 @@ function getSources() {
     function fetchAndSaveSources() {
         return fetch('/sw/sources').then(response => {
             return response.json().then(sourceObject => {
-                saveSources(sourceObject);
+                if (sourceObject.Error) return getJsonResponse(sourceObject);
+
+                saveValues('sources', sourceObject, 'sourceId', 'allSources');
 
                 return getJsonResponse(sourceObject);
             })
@@ -179,6 +191,7 @@ function getSources() {
 }
 
 
+//returns news filtered by country name from idb/network and saves new articles
 function getByCountry(path) {
     const pathInfo = path.split('/')
     const countryCode = pathInfo[pathInfo.length - 1];
@@ -209,12 +222,13 @@ function getByCountry(path) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Network Connection error occured while filtering by selected country" });
+            return getJsonResponse({ Error: "Network Connection error occured while filtering by selected country (code: " + countryCode + ")" });
         });
     }
 }
 
 
+//returns news filtered by source name from idb/network and saves new articles
 function getBySource(path) {
     const pathInfo = path.split('/')
     const sourceCode = pathInfo[pathInfo.length - 1];
@@ -245,12 +259,13 @@ function getBySource(path) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Network Connection error occured while filtering by selected source" });
+            return getJsonResponse({ Error: "Network Connection error occured while filtering by selected source (code: " + sourceCode + ")"  });
         });
     }
 }
 
 
+//helper function to save news articles
 function saveNews(storeName, news) {
     return dbPromise().then(db => {
         if (!db) return;
@@ -265,30 +280,24 @@ function saveNews(storeName, news) {
 }
 
 
-function saveSources(sourceObject) {
+//helper function to save countries and sources
+function saveValues(storeName, object, objectId, id) {
     return dbPromise().then(db => {
         if (!db) return;
 
-        const tx = db.transaction('sources', 'readwrite');
-        const sourcesStore = tx.objectStore('sources');
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
 
-        let allSrcObjects = { sourceId: 'allSources', data: sourceObject };
+        const allObjects = {};
+        allObjects[objectId] = id;
+        allObjects['data'] = object;
 
-        return sourcesStore.put(allSrcObjects);
-    })
-}
-
-
-function saveCountries(countries) {
-    return dbPromise().then(db => {
-        if (!db) return;
-
-        const tx = db.transaction('countries', 'readwrite');
-        const countriesStore = tx.objectStore('countries');
-
-        let allCountriesObjects = { countryId: 'allCountries', data: countries };
-
-        return countriesStore.put(allCountriesObjects);
+        debugger
+        return store.put(allObjects).then(val => {
+            debugger
+        }).catch(err => {
+            debugger
+        });
     })
 }
 
@@ -313,15 +322,19 @@ function saveCountries(countries) {
 //}
 
 
+//cleanup all news store (transactions are reopened for the benefit of unsupporting browsers)
 function cleanAllNewsDb(storeName, count) {
     return dbPromise().then(db => {
         if (!db) return;
 
-        const tx = db.transaction(storeName, 'readwrite');
-        const store = tx.objectStore(storeName);
+        let tx = db.transaction(storeName, 'readwrite');
+        let store = tx.objectStore(storeName);
 
         return store.index('by-date').getAll().then(news => {
             const allNews = news.reverse();
+
+            tx = db.transaction(storeName, 'readwrite');
+            store = tx.objectStore(storeName);
 
             for (let i = count; i < allNews.length; i++) {
                 store.delete(allNews[i]['url']);
@@ -331,16 +344,21 @@ function cleanAllNewsDb(storeName, count) {
 }
 
 
+//clean up filtered new store
 function cleanFilteredNewsDb(storeName, count, key, filter) {
     return dbPromise().then(db => {
         if (!db) return;
 
-        const tx = db.transaction(storeName, 'readwrite');
-        const store = tx.objectStore(storeName);
+        let tx = db.transaction(storeName, 'readwrite');
+        let store = tx.objectStore(storeName);
 
         return store.index('by-date').getAll().then(news => {
-            news=news.reverse();
-            const maxCount=1000;
+            news = news.reverse();
+            const maxCount = 1000;
+
+            tx = db.transaction(storeName, 'readwrite');
+            store = tx.objectStore(storeName);
+
             for (let i = maxCount; i < news.length; i++) {
                 store.delete(news[i][key]);
             }
@@ -354,16 +372,19 @@ function cleanFilteredNewsDb(storeName, count, key, filter) {
 }
 
 
+//return a json formatted response
 function getJsonResponse(jsonData) {
     return new Response(JSON.stringify(jsonData), { headers: { 'Content-Type': 'application/json' } });
 }
 
 
+//respond to message events on service worker
 self.addEventListener('message', event => {
     if (event.data.key == 'skipWaiting') self.skipWaiting();
 })
 
 
+//respond to push notification arrival
 self.addEventListener('push', event => {
     const promiseChain = self.registration.getNotifications().then(notifications => {
         const extraMsg = notifications.length > 0 ? ' (+' + notifications.length + ' message(s))' : '';
@@ -386,6 +407,7 @@ self.addEventListener('push', event => {
 })
 
 
+//respond to push notification click event
 self.addEventListener('notificationclick', event => {
     event.notification.close();
     if (event.action === 'dismiss') {
@@ -406,3 +428,4 @@ self.addEventListener('notificationclick', event => {
 
     event.waitUntil(promiseChain);
 })
+////

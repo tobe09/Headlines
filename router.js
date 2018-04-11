@@ -12,7 +12,7 @@ webPush.setVapidDetails('mailto:chineketobenna@gmail.com', publicKey, privateKey
 
 
 const mongoose = require('mongoose');
-const localAddress = 'mongodb://localhost:27017/headlinesdb';                                  //local development address
+//const localAddress = 'mongodb://localhost:27017/headlinesdb';                                  //local development address
 const hostAddress = 'mongodb://tobe09:nkeody09@ds141889.mlab.com:41889/headlinesdb';             //mLab repository address
 mongoose.connect(hostAddress);
 
@@ -133,7 +133,7 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
             res.json(articles);        //send response back to client
         })
     }).catch(err => {
-        res.json({ Error: "Network Connection error occured while filtering by selected source" });
+        res.json({ Error: "Network Connection error occured while filtering by selected source (code: " + sourceCode + ")" });
     });
 });
 
@@ -156,11 +156,12 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
             res.json(articles);        //send response back to client
         })
     }).catch(err => {
-        res.json({ Error: "Network Connection error occured while filtering by selected country" });
+        res.json({ Error: "Network Connection error occured while filtering by selected country (code: " + countryCode + ")" });
     });
 });
 
 
+//sort articles by date published, source name and author name
 function sortArticles(article1, article2) {
     const date1 = new Date(article1.publishedAt);
     const date2 = new Date(article2.publishedAt);
@@ -168,14 +169,17 @@ function sortArticles(article1, article2) {
     //sort in descending order
     if (date2 > date1) return 1;
     else if (date1 > date2) return -1;
+
     else {
         const compareInt = article1.source.name.localeCompare(article2.source.name);
         if (compareInt !== 0) return compareInt;
+
         return article1.author.localeCompare(article2.author);
     }
 }
 
 
+//save push subscription identity sent by client
 router.post('/pushSubscriptions', function (req, res) {
     const pushSub = req.body;
 
@@ -196,8 +200,10 @@ router.get('*', function (req, res) {
     res.sendFile(relativeAddress, { root: rootLocation });
 });
 
+
 let lastNewsUrl;
 
+//send news update as push subscriptions to subscribed clients
 const newsUpdateInterval = setInterval(() => {
     const newsApiUrl = 'https://newsapi.org/v2/top-headlines?country=ng&sortBy=publishedAt&pageSize=1&apiKey=' + newsApiKey; //top-headlines
 
@@ -227,6 +233,7 @@ const newsUpdateInterval = setInterval(() => {
 }, 5 * 60 * 1000);
 
 
+//send a push message to subscribers
 function sendPushMsg(id, subscription, article) {
     webPush.sendNotification(subscription, JSON.stringify(article)).catch(err => {
         if (err || err.statusCode === 404 || err.statusCode === 410) {
@@ -236,21 +243,24 @@ function sendPushMsg(id, subscription, article) {
 }
 
 
+//delete unnecessary subscriptions from the database
 function deleteSubFromDb(id) {
     PushSubModel.findByIdAndRemove(id, (err, val) => { });
 }
 
 
 
-//for socket publishing
-const newsSubsc=[];
+//FOR SOCKET PUBLISHING
+const newsSubsc=[];         //array of handler functions
 
 
+//add subscribing handler functions for news update
 function setSubscr(handler){
     newsSubsc.push(handler); 
 }
 
 
+//notify subscribibg functions of news update
 function notifySubscr(newsArr, code){
     for(const handler of newsSubsc){
         handler(newsArr, code);

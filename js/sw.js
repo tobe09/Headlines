@@ -88,9 +88,10 @@ function dbPromise() {
                 const sourcesStore = upgradeDb.createObjectStore('sources', { keyPath: 'sourceId' });
                 const countryStore = upgradeDb.createObjectStore('countries', { keyPath: 'countryId' });
             case 2:
-                allNewsStore.createIndex('by-date', ['publishedAt', 'source.name', 'author']);
-                countryNewsStore.createIndex('by-date', ['publishedAt', 'author']);
-                sourceNewsStore.createIndex('by-date', ['publishedAt', 'author']);
+                //allNewsStore.createIndex('by-date', ['publishedAt', 'source.name', 'author'], { unique: true });
+                allNewsStore.createIndex('by-date', 'publishedAt', { unique: true });
+                countryNewsStore.createIndex('by-date', 'publishedAt', { unique: true });
+                sourceNewsStore.createIndex('by-date', 'publishedAt', { unique: true });
         }
     });
 }
@@ -116,8 +117,8 @@ function getAllNews() {
             return response.json().then(articles => {
                 if (articles.Error) return getJsonResponse(articles);
 
-                saveNews('allNews', articles).then(() =>   {
-                    return cleanAllNewsDb('allNews', 30);
+                saveNews('allNews', articles).then(() => {
+                    cleanAllNewsDb('allNews', 30);
                 })
 
                 return getJsonResponse(articles);
@@ -216,7 +217,7 @@ function getByCountry(path) {
                 if (articles.Error) return getJsonResponse(articles);
 
                 saveNews('countryNews', articles).then(val =>  {
-                    return cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode);
+                    cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode);
                 });
 
                 return getJsonResponse(articles);
@@ -239,7 +240,7 @@ function getBySource(path) {
         const tx = db.transaction('sourceNews', 'readwrite');
         const sourceNewsStore = tx.objectStore('sourceNews');
 
-        return sourceNewsStore.index('by-date').getAll().then(sourceNews => {
+    return sourceNewsStore.index('by-date').getAll().then(sourceNews => {
             const fetchSaveSourceNews = fetchAndSaveBySource();
             const bySourceNews = sourceNews.filter(singleNews => singleNews.urlBySourceCode.endsWith(sourceCode));
 
@@ -253,7 +254,7 @@ function getBySource(path) {
                 if (articles.Error) return getJsonResponse(articles);
 
                 saveNews('sourceNews', articles).then(val => {
-                    return cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
+                    cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
                 });
 
                 return getJsonResponse(articles);
@@ -270,16 +271,16 @@ function saveNews(storeName, news) {
     return dbPromise().then(db => {
         if (!db) return;
 
-        const tx = db.transaction(storeName, 'readwrite');
-        const newsStore = tx.objectStore(storeName);
+        let tx = db.transaction(storeName, 'readwrite');
+        let newsStore = tx.objectStore(storeName);
+
+        let promiseChain = Promise.resolve();
 
         news.forEach(singleNews => {
-            newsStore.put(singleNews).then(val => {
-                debugger
-            }).catch(err => {
-                debugger
-            });
-        })
+            promiseChain = promiseChain.then(val => newsStore.put(singleNews));
+        });
+
+        return promiseChain;
     })
 }
 
@@ -301,50 +302,28 @@ function saveValues(storeName, object, objectId, id) {
 }
 
 
-//issues in firefox and some other browsers due to transaction closing on promise continuation (then)//
-//function cleanAllNewsDb(storeName, count) {
-//    return dbPromise().then(db => {
-//        if (!db) return;
-
-//        const tx = db.transaction(storeName, 'readwrite');
-//        const store = tx.objectStore(storeName);
-
-//        store.index('by-date').openCursor(null, 'prev').then(cursor => {
-//            if (!cursor) return;
-//            return cursor.advance(count);
-//        }).then(function deleteExtras(cursor) {
-//            if (!cursor) return;
-//            cursor.delete();
-//            cursor.continue().then(deleteExtras);
-//        })
-//    });
-//}
-
-
-//cleanup all news store (transactions are reopened for the benefit of unsupporting browsers)
+//function to clean general news store
 function cleanAllNewsDb(storeName, count) {
     return dbPromise().then(db => {
         if (!db) return;
 
-        let tx = db.transaction(storeName, 'readwrite');
-        let store = tx.objectStore(storeName);
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
 
-        return store.index('by-date').getAll().then(news => {
-            const allNews = news.reverse();
-
-            tx = db.transaction(storeName, 'readwrite');
-            store = tx.objectStore(storeName);
-
-            for (let i = count; i < allNews.length; i++) {
-                store.delete(allNews[i]['url']);
-            }
+        return store.index('by-date').openCursor(null, 'prev').then(cursor => {
+            if (!cursor) return;
+            return cursor.advance(count);
+        }).then(function deleteExtras(cursor) {
+            if (!cursor) return;
+            cursor.delete();
+            cursor.continue().then(deleteExtras);
         })
-    })
+    });
 }
 
 
-//clean up filtered new store
-function cleanFilteredNewsDb(storeName, count, key, filter) {
+//function to clean up filtered new store
+function cleanFilteredNewsDb(storeName, filterCount, key, filter) {
     return dbPromise().then(db => {
         if (!db) return;
 
@@ -355,18 +334,19 @@ function cleanFilteredNewsDb(storeName, count, key, filter) {
             news = news.reverse();
             const maxCount = 1000;
 
-            tx = db.transaction(storeName, 'readwrite');
-            store = tx.objectStore(storeName);
+            let promiseChain = Promise.resolve();
 
             for (let i = maxCount; i < news.length; i++) {
-                store.delete(news[i][key]);
+                promiseChain = promiseChain.then(val => store.delete(news[i][key]));
             }
 
             const filteredNews = news.filter(singleNews => singleNews[key].endsWith(filter));
-            for (let i = count; i < filteredNews.length; i++) {
-                store.delete(filteredNews[i][key]);
+            for (let i = filterCount; i < filteredNews.length; i++) {
+                promiseChain = promiseChain.then(val => store.delete(filteredNews[i][key]));
             }
-        })
+
+            return promiseChain;
+        });
     });
 }
 
@@ -412,7 +392,7 @@ self.addEventListener('notificationclick', event => {
     if (event.action === 'dismiss') {
         return;
     }
-    const urlToOpen = self.location.origin + '/';     //new URL('localhost:1337', self.location.origin).href;
+    const urlToOpen = self.location.origin + '/';     
     const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
         for (const myClient of myClients) {
             if (myClient.url === urlToOpen) {

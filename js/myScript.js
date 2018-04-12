@@ -321,7 +321,7 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    const address = 'http://localhost:3000';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
+    const address = 'http://localhost:1337';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
     socket = io.connect(address);
     if (!socket) return;
     else clearInterval(socketInterval);
@@ -379,39 +379,43 @@ function notificationSetup() {
     setNotifState(Notification.permission);
 
     $('#btnNotifYes').on('change', function () {
-        if (isNotifEnabled()) return;
+        getPushSubscription().then(registration => {
+            if (registration) return;
 
-        //disableNotifBtns();
+            disableNotifBtns();
 
-        askPermission().then(result => {
-            if (result === 'granted') return subscribeUserToPush();
-            return result;
-        })
-            .then(result => {
-                if (result === 'default') errorMsg("Live news subscription unsuccessful");
-                else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings.");
-                else successMsg("Live news subscription successful");
+            askPermission().then(result => {
+                if (result === 'granted') return subscribeUserToPush();
+                return result;
             })
-            .catch(err => {
-                unsubscribePushNotif();
-                notifSelectOff();
-                errorMsg("Live news subscription failed");
-            });
-            //.then(() => enableNotifBtns());
+                .then(result => {
+                    if (result === 'default') errorMsg("Live news subscription unsuccessful");
+                    else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings.");
+                    else successMsg("Live news subscription successful");
+                })
+                .catch(err => {
+                    unsubscribePushNotif();
+                    notifSelectOff();
+                    errorMsg("Live news subscription failed");
+                })
+                .then(() => enableNotifBtns());
+        });
     });
 
     $('#btnNotifNo').on('change', function () {
-        if (!isNotifEnabled()) return;
+        getPushSubscription().then(registration => {
+            if (!registration) return;
 
-        //disableNotifBtns();
+            disableNotifBtns();
 
-        unsubscribePushNotif()
-            .then(val => successMsg("Live news successfully unsubscribed"))
-            .catch(err => {
-                notifSelectOn();
-                errorMsg("Live news unsubscription failed");
-            });
-            //.then(() => enableNotifBtns());
+            unsubscribePushNotif()
+                .then(val => successMsg("Live news successfully unsubscribed"))
+                .catch(err => {
+                    notifSelectOn();
+                    errorMsg("Live news unsubscription failed");
+                })
+                .then(() => enableNotifBtns());
+        });
     })
 }
 
@@ -423,10 +427,6 @@ function showNotifDiv() {
 
 function hideNotifDiv() {
     $('.notifDiv').css('display', 'none');
-}
-
-function isNotifEnabled() {
-    return $('#notifYes').hasClass('focus active');
 }
 
 function notifSelectOn() {
@@ -442,13 +442,15 @@ function notifSelectOff() {
 
 
 function disableNotifBtns() {
-    $("#btnNotifYes").attr("disabled", true);
-    $("#btnNotifNo").attr("disabled", true);
+    $("#notifNo").css("opacity", 0.2);
+    $("#notifYes").css("opacity", 0.2);
+    return;
 }
 
 function enableNotifBtns() {
-    $("#btnNotifYes").attr("disabled", false);
-    $("#btnNotifNo").attr("disabled", false);
+    $("#notifNo").css("opacity", 1);
+    $("#notifYes").css("opacity", 1);
+    return;
 }
 
 

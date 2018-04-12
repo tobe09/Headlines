@@ -59,7 +59,7 @@ router.get('/sw/allNews', function (req, res) {
     fetch(newsApiUrl).then(response => {
         response.json().then(jsonData => {
             const articles = jsonData.articles;
-            articles.sort(sortArticles)
+
             notifySubscr(articles,'all');
             res.json(articles);             //send response back to client
         })
@@ -79,14 +79,17 @@ router.get('/sw/sources', function (req, res) {
             const sourceGroup = ['business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology'];
             let sourceObject = {};
 
+            //create an object of sources arrays
             for (const srcGrp of sourceGroup) {
                 sourceObject[srcGrp] = [];
             }
 
+            //group by category
             for (const source of sourcesData) {
                 sourceObject[source.category].push([source.id, source.name]);
             }
 
+            //sort by source in category
             for (const category in sourceObject) {
                 sourceObject[category].sort((source1, source2) => source1[1].toLowerCase().localeCompare(source2[1].toLowerCase()));
             }
@@ -110,7 +113,7 @@ router.get('/sw/countries', function (req, res) {
 ['kr', 'South Korea'], ['se', 'Sweden'], ['ch', 'Switzerland'], ['tw', 'Taiwan'], ['th', 'Thailand'], ['tr', 'Turkey'], ['ae', 'United Arab Emirates'],
 ['ua', 'Ukraine'], ['gb', 'United Kingdom'], ['us', 'United States'], ['ve', 'Venezuela']];
 
-    countries.sort((country1, country2) => country1[1].toLowerCase().localeCompare(country2[1].toLowerCase()));
+    //countries.sort((country1, country2) => country1[1].toLowerCase().localeCompare(country2[1].toLowerCase()));
     res.json(countries);
 });
 
@@ -123,7 +126,6 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
     fetch(bySoruceUrl).then(response => {
         response.json().then(jsonData => {
             const articles = jsonData.articles;
-            articles.sort(sortArticles)
 
             for (const article of articles) {
                 article.urlBySourceCode = article.url + sourceCode;
@@ -146,7 +148,6 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
     fetch(byCountryUrl).then(response => {
         response.json().then(jsonData => {
             const articles = jsonData.articles;
-            articles.sort(sortArticles)
 
             for (const article of articles) {
                 article.urlByCountryCode = article.url + countryCode;
@@ -161,22 +162,26 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
 });
 
 
-//sort articles by date published, source name and author name
-function sortArticles(article1, article2) {
-    const date1 = new Date(article1.publishedAt);
-    const date2 = new Date(article2.publishedAt);
+////sort articles by date published, source name and author name
+//function sortArticles(article1, article2) {
+//    const date1 = new Date(article1.publishedAt);
+//    const date2 = new Date(article2.publishedAt);
 
-    //sort in descending order
-    if (date2 > date1) return 1;
-    else if (date1 > date2) return -1;
+//    //sort in descending order
+//    if (date2 > date1) return 1;
+//    else if (date1 > date2) return -1;
 
-    else {
-        const compareInt = article1.source.name.localeCompare(article2.source.name);
-        if (compareInt !== 0) return compareInt;
+//    else {
+//        const name1 = article1.source.name || '';
+//        const name2 = article2.source.name || '';
+//        const compareInt = name1.localeCompare(name2);
+//        if (compareInt !== 0) return compareInt;
 
-        return article1.author.localeCompare(article2.author);
-    }
-}
+//        const author1 = article1.author || '';
+//        const author2 = article2.author || '';
+//        return author1.localeCompare(author2);
+//    }
+//}
 
 
 //save push subscription identity sent by client

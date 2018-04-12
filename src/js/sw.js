@@ -1,4 +1,4 @@
-﻿self.importScripts('Headlines/node_modules/idb/lib/idb.js');            //import indexed db promise file
+﻿self.importScripts('/node_modules/idb/lib/idb.js');            //import indexed db promise file
 
 
 const newCache = 'headlines-static-3';
@@ -10,19 +10,19 @@ const allCaches = [newCache, imgCache];
 self.addEventListener('install', event => {
     const urlToCache = [
         '/',
-        'Headlines/node_modules/jquery/dist/jquery.min.js',
-        'Headlines/node_modules/popper.js/dist/popper.min.js',
-        'Headlines/node_modules/bootstrap/dist/js/bootstrap.min.js',
-        'Headlines/src/js/myScript.js',
-        'Headlines/src/js/mySwTasks.js',
-        'Headlines/node_modules/bootstrap/dist/css/bootstrap.min.css',
-        'Headlines/src/css/myStyles.css',
-        'socket.io/socket.io.js'
+        '/node_modules/jquery/dist/jquery.min.js',
+        '/node_modules/popper.js/dist/popper.min.js',
+        '/node_modules/bootstrap/dist/js/bootstrap.min.js',
+        '/src/js/myScript.js',
+        '/src/js/mySwTasks.js',
+        '/socket.io/socket.io.js',
+        '/node_modules/bootstrap/dist/css/bootstrap.min.css',
+        '/src/css/myStyles.css'
     ];
     const imgToCache = [
-        'Headlines/src/assets/images/noImage.png',
-        'Headlines/src/assets/images/headlines.ico',
-        'Headlines/src/assets/images/headlinesRed.jpg'
+        '/src/assets/images/noImage.png',
+        '/src/assets/images/headlines.ico',
+        '/src/assets/images/headlinesRed.jpg'
     ];
 
     event.waitUntil((function () {
@@ -89,9 +89,9 @@ function dbPromise() {
                 const countryStore = upgradeDb.createObjectStore('countries', { keyPath: 'countryId' });
             case 2:
                 //allNewsStore.createIndex('by-date', ['publishedAt', 'source.name', 'author'], { unique: true });
-                allNewsStore.createIndex('by-date', 'publishedAt', { unique: true });
-                countryNewsStore.createIndex('by-date', 'publishedAt', { unique: true });
-                sourceNewsStore.createIndex('by-date', 'publishedAt', { unique: true });
+                allNewsStore.createIndex('by-date', ['publishedAt', 'url']);
+                countryNewsStore.createIndex('by-date', ['publishedAt', 'urlByCountryCode']);
+                sourceNewsStore.createIndex('by-date', ['publishedAt', 'urlBySourceCode']);
         }
     });
 }
@@ -371,12 +371,12 @@ self.addEventListener('push', event => {
         const article = event.data.json();
         const options = {
             body: article.title,
-            icon: 'Headlines/src/assets/images/headlines.ico',
-            image: article.urlToImage || 'Headlines/src/assets/images/noImage.png',
+            icon: '/src/assets/images/headlines.ico',
+            image: article.urlToImage || '/src/assets/images/noImage.png',
             vibrate: [500, 100, 400, 80, 300, 80, 200, 60, 100, 50, 80],
             tag: 'newsNotiification',
-            actions: [{ action: 'open', title: 'OPEN', icon: 'Headlines/src/assets/images/headlines.ico' },
-                { action: 'dismiss', title: 'DISMISS', icon: 'Headlines/src/assets/images/headlinesRed.jpg' }]
+            actions: [{ action: 'open', title: 'OPEN', icon: '/src/assets/images/headlines.ico' },
+                { action: 'dismiss', title: 'DISMISS', icon: '/src/assets/images/headlinesRed.jpg' }]
         }
 
         return self.registration.showNotification(title, options);

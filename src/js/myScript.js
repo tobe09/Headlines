@@ -384,7 +384,7 @@ function notificationSetup() {
 
             disableNotifBtns();
 
-            askPermission().then(result => {
+            return askPermission().then(result => {
                 if (result === 'granted') return subscribeUserToPush();
                 return result;
             })
@@ -398,8 +398,7 @@ function notificationSetup() {
                     notifSelectOff();
                     errorMsg("Live news subscription failed");
                 })
-                .then(() => enableNotifBtns());
-        });
+        }).then(() => enableNotifBtns());
     });
 
     $('#btnNotifNo').on('change', function () {
@@ -408,14 +407,13 @@ function notificationSetup() {
 
             disableNotifBtns();
 
-            unsubscribePushNotif()
+            return unsubscribePushNotif()
                 .then(val => successMsg("Live news successfully unsubscribed"))
                 .catch(err => {
                     notifSelectOn();
                     errorMsg("Live news unsubscription failed");
                 })
-                .then(() => enableNotifBtns());
-        });
+        }).then(() => enableNotifBtns());
     })
 }
 
@@ -521,8 +519,6 @@ function sendSubscriptionToServer(pushSubscription) {
 function getPushSubscription() {
     return navigator.serviceWorker.ready.then(reg => {
         return reg.pushManager.getSubscription()
-    }).catch(err => {
-        debugger
     });
 }
 

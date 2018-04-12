@@ -239,7 +239,7 @@ function getBySource(path) {
         const tx = db.transaction('sourceNews', 'readwrite');
         const sourceNewsStore = tx.objectStore('sourceNews');
 
-    return sourceNewsStore.index('by-date').getAll().then(sourceNews => {
+        return sourceNewsStore.index('by-date').getAll().then(sourceNews => {
             const fetchSaveSourceNews = fetchAndSaveBySource();
             const bySourceNews = sourceNews.filter(singleNews => singleNews.urlBySourceCode.endsWith(sourceCode));
 
@@ -274,7 +274,11 @@ function saveNews(storeName, news) {
         const newsStore = tx.objectStore(storeName);
 
         news.forEach(singleNews => {
-            newsStore.put(singleNews);
+            newsStore.put(singleNews).then(val => {
+                debugger
+            }).catch(err => {
+                debugger
+            });
         })
     })
 }
@@ -291,13 +295,8 @@ function saveValues(storeName, object, objectId, id) {
         const allObjects = {};
         allObjects[objectId] = id;
         allObjects['data'] = object;
-
-        debugger
-        return store.put(allObjects).then(val => {
-            debugger
-        }).catch(err => {
-            debugger
-        });
+        
+        return store.put(allObjects)
     })
 }
 

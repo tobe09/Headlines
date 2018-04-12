@@ -28,7 +28,7 @@ const setSubscr = require('./src/router.js').setSubscr;     //subscribe a method
 //
 //const server = https.createServer(options, app);
 
-const port = process.env.port || 3000;
+const port = process.env.PORT || 3000;
 
 const svr = app.listen(port, function () {
     console.log('Server now running on port: ' + svr.address().port);

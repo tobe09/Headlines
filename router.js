@@ -36,25 +36,25 @@ const newsApiKey = '11bae20ea48e474890528e504ea733e2';
 
 //to locate application files (relative to application root)
 const path = require('path');
-const rootLocation = path.join(__dirname, '../../');
+const rootLocation = path.join(__dirname, '../');
 
 
 //get web page
 router.get('/', function (req, res) {
-    res.sendFile('Headlines/src/index.html', { root: rootLocation });
+    res.sendFile('/src/index.html', { root: rootLocation });
 })
 
 
 //get service worker
 router.get('/sw.js', function (req, res) {
-    res.sendFile('Headlines/src/js/sw.js', { root: rootLocation });
+    res.sendFile('/src/js/sw.js', { root: rootLocation });
 })
 
 
 //get all news
 router.get('/sw/allNews', function (req, res) {
     const pageSize = 30;
-    const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=ng&pageSize=' + pageSize + '&apiKey=' + newsApiKey; //top-headlines
+    const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=ng&pageSize=' + pageSize + '&apiKey=' + newsApiKey;     //top-headlines
 
     fetch(newsApiUrl).then(response => {
         response.json().then(jsonData => {

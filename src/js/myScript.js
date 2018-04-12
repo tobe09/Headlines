@@ -1,4 +1,4 @@
-ee﻿$(function () {
+﻿$(function () {
     basicMsg("Loading...");
 
     showCountries();

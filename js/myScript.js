@@ -321,7 +321,7 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    const address = 'http://localhost:1337';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
+    const address = 'http://localhost:3000';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
     socket = io.connect(address);
     if (!socket) return;
     else clearInterval(socketInterval);

@@ -59,6 +59,7 @@ router.get('/sw/allNews', function (req, res) {
     fetch(newsApiUrl).then(response => {
         response.json().then(jsonData => {
             const articles = jsonData.articles;
+            articles.sort(sortArticles);
 
             notifySubscr(articles,'all');
             res.json(articles);             //send response back to client
@@ -126,6 +127,7 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
     fetch(bySoruceUrl).then(response => {
         response.json().then(jsonData => {
             const articles = jsonData.articles;
+            articles.sort(sortArticles);
 
             for (const article of articles) {
                 article.urlBySourceCode = article.url + sourceCode;
@@ -148,6 +150,7 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
     fetch(byCountryUrl).then(response => {
         response.json().then(jsonData => {
             const articles = jsonData.articles;
+            articles.sort(sortArticles);
 
             for (const article of articles) {
                 article.urlByCountryCode = article.url + countryCode;
@@ -162,26 +165,19 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
 });
 
 
-////sort articles by date published, source name and author name
-//function sortArticles(article1, article2) {
-//    const date1 = new Date(article1.publishedAt);
-//    const date2 = new Date(article2.publishedAt);
+//sort articles by date published and url
+function sortArticles(article1, article2) {
+    const date1 = new Date(article1.publishedAt);
+    const date2 = new Date(article2.publishedAt);
 
-//    //sort in descending order
-//    if (date2 > date1) return 1;
-//    else if (date1 > date2) return -1;
+    //sort in descending order for date published and url
+    if (date2 > date1) return 1;
+    else if (date1 > date2) return -1;
 
-//    else {
-//        const name1 = article1.source.name || '';
-//        const name2 = article2.source.name || '';
-//        const compareInt = name1.localeCompare(name2);
-//        if (compareInt !== 0) return compareInt;
-
-//        const author1 = article1.author || '';
-//        const author2 = article2.author || '';
-//        return author1.localeCompare(author2);
-//    }
-//}
+    else {
+        return -1 * article1.url.localeCompare(article2.url);
+    }
+}
 
 
 //save push subscription identity sent by client

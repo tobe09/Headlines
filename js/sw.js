@@ -90,8 +90,8 @@ function dbPromise() {
             case 2:
                 //allNewsStore.createIndex('by-date', ['publishedAt', 'source.name', 'author'], { unique: true });
                 allNewsStore.createIndex('by-date', ['publishedAt', 'url']);
-                countryNewsStore.createIndex('by-date', ['publishedAt', 'urlByCountryCode']);
-                sourceNewsStore.createIndex('by-date', ['publishedAt', 'urlBySourceCode']);
+                countryNewsStore.createIndex('by-date', ['publishedAt', 'url']);
+                sourceNewsStore.createIndex('by-date', ['publishedAt', 'url']);
         }
     });
 }

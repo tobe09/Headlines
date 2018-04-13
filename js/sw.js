@@ -13,6 +13,7 @@ self.addEventListener('install', event => {
         '/node_modules/jquery/dist/jquery.min.js',
         '/node_modules/popper.js/dist/popper.min.js',
         '/node_modules/bootstrap/dist/js/bootstrap.min.js',
+        '/node_modules/idb/lib/idb.js',
         '/src/js/myScript.js',
         '/src/js/mySwTasks.js',
         '/socket.io/socket.io.js',
@@ -21,6 +22,7 @@ self.addEventListener('install', event => {
     ];
     const imgToCache = [
         '/src/assets/images/noImage.png',
+        '/src/assets/images/blockedImage.jpg',
         '/src/assets/images/headlines.ico',
         '/src/assets/images/headlinesRed.jpg'
     ];
@@ -47,8 +49,7 @@ self.addEventListener('activate', event => {
     );
 });
 
-
-//handles fetch event of service worker
+//handles fetch event of service worker//
 self.addEventListener('fetch', (event) => {
     let requestUrl = new URL(event.request.url);
     if (requestUrl.origin === location.origin) {
@@ -71,7 +72,16 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    event.respondWith(fetch(event.request));
+    event.respondWith(fetch(event.request).then(response => {
+        if (!response.ok && (event.request.url.endsWith('.jpg') || event.request.url.endsWith('.jpg') || event.request.url.endsWith('.jpg'))) {
+            const urlArr = event.request.url.split('/');
+            const imgHost = urlArr[0] + '//' + urlArr[2];
+
+            return fetch(event.request, { method: 'GET', headers: { Referer: imgHost } })
+        }
+
+        return response;
+    }));
 })
 
 
@@ -124,10 +134,41 @@ function getAllNews() {
                 return getJsonResponse(articles);
             })
         }).catch(err => {
-            return getJsonResponse({ Error: "Network Connection error occured while fetching news from the api" });
+            return getJsonResponse({ Error: "Network Error (All)" });
         });
     }
-};
+}
+
+
+//returns all sources from idb/network and saves sources (to account for changes)
+function getSources() {
+    return dbPromise().then(db => {
+        if (!db) return fetchAndSaveSources();
+
+        const tx = db.transaction('sources', 'readwrite');
+        const sourcesStore = tx.objectStore('sources');
+
+        return sourcesStore.getAll().then(allSrcObjects => {
+            const fetchSaveSources = fetchAndSaveSources();
+
+            return allSrcObjects.length > 0 ? getJsonResponse(allSrcObjects[0].data) : fetchSaveSources;
+        });
+    })
+
+    function fetchAndSaveSources() {
+        return fetch('/sw/sources').then(response => {
+            return response.json().then(sourceObject => {
+                if (sourceObject.Error) return getJsonResponse(sourceObject);
+
+                saveValues('sources', sourceObject, 'sourceId', 'allSources');
+
+                return getJsonResponse(sourceObject);
+            })
+        }).catch(error => {
+            return getJsonResponse({ Error: "Network Error (Sources)" });
+        });
+    }
+}
 
 
 //returns all countries from idb/network and saves countries (to account for changes)
@@ -155,38 +196,7 @@ function getCountries() {
                 return getJsonResponse(countriesObject);
             })
         }).catch(err => {
-            return getJsonResponse({ Error: "Network Connection error occured while fetching countries from the server" });
-        });
-    }
-}
-
-
-//returns all sources from idb/network and saves sources (to account for changes)
-function getSources() {
-    return dbPromise().then(db => {
-        if (!db) return fetchAndSaveSources();
-
-        const tx = db.transaction('sources', 'readwrite');
-        const sourcesStore = tx.objectStore('sources');
-        
-        return sourcesStore.getAll().then(allSrcObjects => {
-            const fetchSaveSources = fetchAndSaveSources();
-
-            return allSrcObjects.length > 0 ? getJsonResponse(allSrcObjects[0].data) : fetchSaveSources;
-        });
-    })
-
-    function fetchAndSaveSources() {
-        return fetch('/sw/sources').then(response => {
-            return response.json().then(sourceObject => {
-                if (sourceObject.Error) return getJsonResponse(sourceObject);
-
-                saveValues('sources', sourceObject, 'sourceId', 'allSources');
-
-                return getJsonResponse(sourceObject);
-            })
-        }).catch(error => {
-            return getJsonResponse({ Error: "Network Connection error occured while fetching sources from the api" });
+            return getJsonResponse({ Error: "Network Error (Countries)" });
         });
     }
 }
@@ -223,7 +233,7 @@ function getByCountry(path) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Network Connection error occured while filtering by selected country (code: " + countryCode + ")" });
+            return getJsonResponse({ Error: "Network Error (Country Code: " + countryCode + ")" });
         });
     }
 }
@@ -260,7 +270,7 @@ function getBySource(path) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Network Connection error occured while filtering by selected source (code: " + sourceCode + ")"  });
+            return getJsonResponse({ Error: "Network Error (Source Code: " + sourceCode + ")"  });
         });
     }
 }
@@ -383,7 +393,7 @@ self.addEventListener('push', event => {
     })
 
     event.waitUntil(promiseChain);
-})
+});
 
 
 //respond to push notification click event
@@ -392,6 +402,7 @@ self.addEventListener('notificationclick', event => {
     if (event.action === 'dismiss') {
         return;
     }
+
     const urlToOpen = self.location.origin + '/';     
     const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
         for (const myClient of myClients) {
@@ -407,3 +418,4 @@ self.addEventListener('notificationclick', event => {
 
     event.waitUntil(promiseChain);
 })
+/////

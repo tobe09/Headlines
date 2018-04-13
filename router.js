@@ -51,21 +51,56 @@ router.get('/sw.js', function (req, res) {
 })
 
 
+const countries = [['ar', 'Argentina'], ['au', 'Australia'], ['at', 'Austria'], ['be', 'Belgium'], ['br', 'Brazil'], ['bg', 'Bulgaria'],
+    ['ca', 'Canada'], ['cn', 'China'], ['co', 'Columbia'], ['cu', 'Cuba'], ['cz', 'Czech Republic'], ['eg', 'Egypt'], ['fr', 'France'],
+    ['de', 'Germany'], ['gr', 'Greece'], ['hk', 'Hong Kong'], ['hu', 'Hungary'], ['in', 'India'], ['id', 'Indonesia'], ['ie', 'Ireland'],
+    ['il', 'Israel'], ['it', 'Italy'], ['jp', 'Japan'], ['lv', 'Latvia'], ['lt', 'Lituania'], ['my', 'Malaysia'], ['mx', 'Mexico'], ['ma', 'Morocco'],
+    ['nl', 'NetherLand'], ['mz', 'New Zealand'], ['ng', 'Nigeria'], ['ph', 'Philippines'], ['pl', 'Poland'], ['pt', 'Portuga'], ['ro', 'Romania'],
+    ['ru', 'Russia'], ['sa', 'Saudi Arabia'], ['rs', 'Serbia'], ['sg', 'Singapore'], ['sk', 'Slovakia'], ['si', 'Slovenia'], ['za', 'Soth Africa'],
+    ['kr', 'South Korea'], ['se', 'Sweden'], ['ch', 'Switzerland'], ['tw', 'Taiwan'], ['th', 'Thailand'], ['tr', 'Turkey'], ['ae', 'United Arab Emirates'],
+    ['ua', 'Ukraine'], ['gb', 'United Kingdom'], ['us', 'United States'], ['ve', 'Venezuela']];
+
+function getValidCountryCode(countryCode) {
+    for (const countryArr in countries) {
+        if (countryCode === countryArr[0]) return countryCode;
+    }
+
+    return 'ng';
+}
+
+
 //get all news
 router.get('/sw/allNews', function (req, res) {
-    const pageSize = 30;
-    const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=ng&pageSize=' + pageSize + '&apiKey=' + newsApiKey;     //top-headlines
+    let promiseChain = Promise.resolve();
 
-    fetch(newsApiUrl).then(response => {
-        response.json().then(jsonData => {
-            const articles = jsonData.articles;
-            articles.sort(sortArticles);
+    promiseChain.then(() => {
+        const ipArr = req.ip.split(':');
+        const clientIp = ipArr[ipArr.length - 1];
 
-            notifySubscr(articles,'all');
-            res.json(articles);             //send response back to client
+        const ipLocator = require("node-iplocate");
+        
+        return ipLocator(clientIp).then(payload => {
+            const countryCode = payload.country_code.toLowerCase();
+            const validCountryCode = getValidCountryCode(countryCode);
+
+            return validCountryCode;
         })
-    }).catch(err => {
-        res.json({ Error: "Network Connection error occured while fetching news from the api" });
+            .catch(err => "ng");
+    }).then(countryCode => {
+        const pageSize = 30;
+        const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode + '&pageSize=' + pageSize + '&apiKey=' + newsApiKey;
+
+        fetch(newsApiUrl).then(response => {
+            response.json().then(jsonData => {
+                const articles = jsonData.articles;
+                articles.sort(sortArticles);
+
+                notifySubscr(articles, 'all');
+                res.json(articles);             //send response back to client
+            })
+        }).catch(err => {
+            res.json({ Error: "Network Error (All)" });
+        });
     });
 });
 
@@ -98,22 +133,13 @@ router.get('/sw/sources', function (req, res) {
             res.json(sourceObject);
         })
     }).catch(err => {
-        res.json({ Error: "Network Connection error occured while fetching sources from the api" });
+        res.json({ Error: "Network Error (Sources)" });
     });
 });
 
 
 //get all countries
-router.get('/sw/countries', function (req, res) {
-    const countries = [['ar', 'Argentina'], ['au', 'Australia'], ['at', 'Austria'], ['be', 'Belgium'], ['br', 'Brazil'], ['bg', 'Bulgaria'],
-['ca', 'Canada'], ['cn', 'China'], ['co', 'Columbia'], ['cu', 'Cuba'], ['cz', 'Czech Republic'], ['eg', 'Egypt'], ['fr', 'France'],
-['de', 'Germany'], ['gr', 'Greece'], ['hk', 'Hong Kong'], ['hu', 'Hungary'], ['in', 'India'], ['id', 'Indonesia'], ['ie', 'Ireland'],
-['il', 'Israel'], ['it', 'Italy'], ['jp', 'Japan'], ['lv', 'Latvia'], ['lt', 'Lituania'], ['my', 'Malaysia'], ['mx', 'Mexico'], ['ma', 'Morocco'],
-['nl', 'NetherLand'], ['mz', 'New Zealand'], ['ng', 'Nigeria'], ['ph', 'Philippines'], ['pl', 'Poland'], ['pt', 'Portuga'], ['ro', 'Romania'],
-['ru', 'Russia'], ['sa', 'Saudi Arabia'], ['rs', 'Serbia'], ['sg', 'Singapore'], ['sk', 'Slovakia'], ['si', 'Slovenia'], ['za', 'Soth Africa'],
-['kr', 'South Korea'], ['se', 'Sweden'], ['ch', 'Switzerland'], ['tw', 'Taiwan'], ['th', 'Thailand'], ['tr', 'Turkey'], ['ae', 'United Arab Emirates'],
-['ua', 'Ukraine'], ['gb', 'United Kingdom'], ['us', 'United States'], ['ve', 'Venezuela']];
-
+router.get('/sw/countries', function (req, res) {  
     //countries.sort((country1, country2) => country1[1].toLowerCase().localeCompare(country2[1].toLowerCase()));
     res.json(countries);
 });
@@ -137,7 +163,7 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
             res.json(articles);        //send response back to client
         })
     }).catch(err => {
-        res.json({ Error: "Network Connection error occured while filtering by selected source (code: " + sourceCode + ")" });
+        res.json({ Error: "Network Error (Source Code: " + sourceCode + ")" });
     });
 });
 
@@ -160,7 +186,7 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
             res.json(articles);        //send response back to client
         })
     }).catch(err => {
-        res.json({ Error: "Network Connection error occured while filtering by selected country (code: " + countryCode + ")" });
+        res.json({ Error: "Network Error (Country Code: " + countryCode + ")" });
     });
 });
 
@@ -256,15 +282,26 @@ const newsSubsc=[];         //array of handler functions
 
 
 //add subscribing handler functions for news update
-function setSubscr(handler){
-    newsSubsc.push(handler); 
+function setSubscr(id, handler){
+    newsSubsc.push({ id, handler }); 
 }
 
 
-//notify subscribibg functions of news update
-function notifySubscr(newsArr, code){
-    for(const handler of newsSubsc){
-        handler(newsArr, code);
+//notify subscribing functions of news update
+function notifySubscr(newsArr, code) {
+    for (const handle of newsSubsc) {
+        handle.handler(newsArr, code);
+    }
+}
+
+
+//remove subscribing functions from news update
+function removeSubscr(id) {
+    for (let i = 0; i < newsSubsc.length; i++) {
+        if (newsSubsc[i].id === id) {
+            newsSubsc.splice(i, 1);
+            return
+        }
     }
 }
 
@@ -272,5 +309,6 @@ function notifySubscr(newsArr, code){
 
 module.exports = {
     router,
-    setSubscr
+    setSubscr,
+    removeSubscr
 };

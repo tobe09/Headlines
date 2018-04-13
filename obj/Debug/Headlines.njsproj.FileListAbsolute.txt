@@ -1,2 +1,0 @@
-c:\users\neptunedev1\documents\visual studio 2015\Projects\Headlines\Headlines\obj\Debug\Headlines.njsprojResolveAssemblyReference.cache
-c:\users\neptunedev1\documents\visual studio 2015\Projects\Headlines\Headlines\bin\Microsoft.NodejsTools.WebRole.dll

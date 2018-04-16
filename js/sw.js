@@ -55,11 +55,11 @@ self.addEventListener('fetch', (event) => {
     if (requestUrl.origin === location.origin) {
         if (requestUrl.pathname.startsWith('/sw/')) {
             let response;
-            if (requestUrl.pathname.startsWith('/sw/allNews')) response = getAllNews(event.request.url);
+            if (requestUrl.pathname === '/sw/allNews') response = getAllNews(event.request.url);
             else if (requestUrl.pathname === '/sw/countries') response = getCountries(event.request.url);
             else if (requestUrl.pathname === '/sw/sources') response = getSources(event.request.url);
-            else if (requestUrl.pathname.startsWith('/sw/byCountry')) response = getByCountry(event.request.url);
-            else if (requestUrl.pathname.startsWith('/sw/bySource')) response = getBySource(event.request.url);
+            else if (requestUrl.pathname === '/sw/byCountry') response = getByCountry(event.request.url);
+            else if (requestUrl.pathname === '/sw/bySource') response = getBySource(event.request.url);
             else response = fetch(event.request);
 
             event.respondWith(response);
@@ -492,4 +492,4 @@ self.addEventListener('notificationclick', event => {
 
     event.waitUntil(promiseChain);
 })
-/////
+////////

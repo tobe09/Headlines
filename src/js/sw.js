@@ -206,8 +206,9 @@ function getCountries(url) {
 
 //returns news filtered by country name from idb/network and saves new articles
 function getByCountry(url) {
-    const pathInfo = url.split('/')
-    const countryCode = pathInfo[pathInfo.length - 1];
+    const pathInfoArr = url.split('/');
+    const countryCodeArr = pathInfoArr[pathInfoArr.length - 1].split('?');
+    const countryCode = countryCodeArr[0];
 
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveByCountry();
@@ -243,8 +244,9 @@ function getByCountry(url) {
 
 //returns news filtered by source name from idb/network and saves new articles
 function getBySource(url) {
-    const pathInfo = url.split('/')
-    const sourceCode = pathInfo[pathInfo.length - 1];
+    const pathInfoArr = url.split('/', '?');
+    const sourceCodeArr = pathInfoArr[pathInfoArr.length - 2].split('?');
+    const sourceCode = sourceCodeArr[0];
 
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveBySource();
@@ -420,4 +422,4 @@ self.addEventListener('notificationclick', event => {
 
     event.waitUntil(promiseChain);
 })
-/////
+////////

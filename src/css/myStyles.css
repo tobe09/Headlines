@@ -312,14 +312,34 @@ aside {
     }
 
     .filterSubHeader, .notifText {
-        font-size: 16px;
+        font-size: 17px;
     }
 
-    #filters{
-        padding-top:5px;
+    #filters {
+        padding-top: 5px;
+        margin-top:10px;
     }
 
-    select, .info-headers, .info-desc{
-        font-size:14px;
+    .filterSources{
+        margin-top:5px;
+    }
+
+    select, .info-headers, .info-desc {
+        font-size: 15px;
+    }
+
+    .heading {
+        position: relative;
+    }
+
+    #divMsg {
+        position: relative;
+        margin-bottom: -20px;
+        margin-top: 15px;
+    }
+
+    .fixed-bottom {
+        position: relative;
+        margin-top: -70px;
     }
 }

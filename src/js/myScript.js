@@ -112,7 +112,7 @@ function handleCountryChange(countryCode, countryName) {
 
     displayFilterValues('COUNTRY -', countryName);
 
-    dataApi('GET', 'sw/byCountry/' + countryCode + '?socketId' + getSocketId()).then(filteredNews => {
+    dataApi('GET', 'sw/byCountry/' + countryCode + '?socketId=' + getSocketId()).then(filteredNews => {
         if (filteredNews.Error != null) {
             errorMsg(filteredNews.Error);
             return;
@@ -141,7 +141,7 @@ function handleSourceChange(sourceCode, sourceName) {
 
     displayFilterValues('SOURCE -', sourceName)
 
-    dataApi('GET', 'sw/bySource/' + sourceCode + '?socketId' + getSocketId()).then(filteredNews => {
+    dataApi('GET', 'sw/bySource/' + sourceCode + '?socketId=' + getSocketId()).then(filteredNews => {
         if (filteredNews.Error != null) {
             errorMsg(filteredNews.Error);
             return;
@@ -321,7 +321,7 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    const address = 'https://headlines-tobe.herokuapp.com';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
+    const address = 'https://headlines-tobe.herokuapp.com';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com
     socket = io.connect(address);
     if (!socket) return;
     else clearInterval(socketInterval);

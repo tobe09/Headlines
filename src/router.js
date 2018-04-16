@@ -290,7 +290,7 @@ function addNewsHandler(id, handler) {
 
 //notify subscribing functions of news update
 function notifyClientSocket(id, newsArr, code) {
-    if (id != 'none') {
+    if (id && id != 'none') {
         newsSocketClients[id](newsArr, code);
     }
 }

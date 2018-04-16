@@ -405,7 +405,7 @@ function notificationSetup() {
                     if (result === 'default') errorMsg("Live news subscription unsuccessful");
                     else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings.");
                     else if (result.Error && result.Error != '') errorMsg(result.Error);
-                    else successMsg("Live news subscription unsuccessful");
+                    else successMsg("Live news subscription successful");
                 })
                 .catch(err => {
                     unsubscribePushNotif();

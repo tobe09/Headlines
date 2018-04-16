@@ -69,6 +69,7 @@ self.addEventListener('fetch', (event) => {
                 return data || fetch(event.request);
             }));
         }
+
         return;
     }
 
@@ -280,6 +281,7 @@ function getBySource(url) {
 }
 
 
+//due to specification differences (as regards transactions and promises), not compatible in firefox
 //helper function to save news articles
 function saveNews(storeName, news) {
     return dbPromise().then(db => {
@@ -295,6 +297,21 @@ function saveNews(storeName, news) {
         });
 
         return promiseChain;
+    })
+}
+
+//due to specification differences (as regards transactions and promises), not compatible in chrome
+//helper function to save news articles
+function saveNewsF(storeName, news) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        let tx = db.transaction(storeName, 'readwrite');
+        let newsStore = tx.objectStore(storeName);
+
+        news.forEach(singleNews => {
+            newsStore.put(singleNews);
+        });
     })
 }
 
@@ -316,6 +333,7 @@ function saveValues(storeName, object, objectId, id) {
 }
 
 
+//due to specification differences (as regards transactions and promises), not compatible in firefox
 //function to clean general news store
 function cleanAllNewsDb(storeName, count) {
     return dbPromise().then(db => {
@@ -335,7 +353,30 @@ function cleanAllNewsDb(storeName, count) {
     });
 }
 
+//due to specification differences (as regards transactions and promises), not compatible in chrome
+//function to clean general news store
+function cleanAllNewsDbF(storeName, count) {
+    return dbPromise().then(db => {
+        if (!db) return;
 
+        let tx = db.transaction(storeName, 'readwrite');
+        let store = tx.objectStore(storeName);
+
+        return store.index('by-date').getAll().then(news => {
+            news = news.reverse();
+
+            tx = db.transaction(storeName, 'readwrite');
+            store = tx.objectStore(storeName);
+            
+            for (let i = count; i < news.length; i++) {
+                store.delete(news[i]['url']);
+            }
+        })
+    });
+}
+
+
+//due to specification differences (as regards transactions and promises), not compatible in firefox
 //function to clean up filtered new store
 function cleanFilteredNewsDb(storeName, filterCount, key, filter) {
     return dbPromise().then(db => {
@@ -363,6 +404,35 @@ function cleanFilteredNewsDb(storeName, filterCount, key, filter) {
         });
     });
 }
+
+//due to specification differences (as regards transactions and promises), not compatible in chrome
+//function to clean up filtered new store
+function cleanFilteredNewsDbF(storeName, filterCount, key, filter) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        let tx = db.transaction(storeName, 'readwrite');
+        let store = tx.objectStore(storeName);
+
+        return store.index('by-date').getAll().then(news => {
+            news = news.reverse();
+            const maxCount = 1000;
+
+            tx = db.transaction(storeName, 'readwrite');
+            store = tx.objectStore(storeName);
+
+            for (let i = maxCount; i < news.length; i++) {
+                store.delete(news[i][key]);
+            }
+
+            const filteredNews = news.filter(singleNews => singleNews[key].endsWith(filter));
+            for (let i = filterCount; i < filteredNews.length; i++) {
+                store.delete(filteredNews[i][key]);
+            }
+        });
+    });
+}
+
 
 
 //return a json formatted response
@@ -422,4 +492,4 @@ self.addEventListener('notificationclick', event => {
 
     event.waitUntil(promiseChain);
 })
-////
+////////

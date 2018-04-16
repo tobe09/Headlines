@@ -50,7 +50,7 @@ serverSocket.on('connection', clntSocket => {
 
 //serverSocket.on('clientDisconnected', id => {
 //    console.log('client disconnected: ' + id + '    (' + connections + ' connection(s))');
-//});
+//});//
 
 
 //add a handler for news notifications

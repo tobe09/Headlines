@@ -245,8 +245,8 @@ function getByCountry(url) {
 
 //returns news filtered by source name from idb/network and saves new articles
 function getBySource(url) {
-    const pathInfoArr = url.split('/', '?');
-    const sourceCodeArr = pathInfoArr[pathInfoArr.length - 2].split('?');
+    const pathInfoArr = url.split('/');
+    const sourceCodeArr = pathInfoArr[pathInfoArr.length - 1].split('?');
     const sourceCode = sourceCodeArr[0];
 
     return dbPromise().then(db => {

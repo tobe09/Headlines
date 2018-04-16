@@ -12,7 +12,8 @@ const router = require('./src/router.js').router;
 app.use('/', router);
 
 
-const setSubscr = require('./src/router.js').setSubscr;     //subscribe a method to be notified by socket of new articles
+const addNewsHandler = require('./src/router.js').addNewsHandler;     //subscribe a method to be notified by socket of new articles
+const removeNewsHandler = require('./src/router.js').removeNewsHandler;     //subscribe a method to be notified by socket of new articles
 
 
 //const https = require('https');
@@ -21,8 +22,8 @@ const setSubscr = require('./src/router.js').setSubscr;     //subscribe a method
 
 //var rootLocation = path.join(__dirname, '../');
 //const options = {
-//    key: fs.readFileSync(rootLocation + 'Headlines/src/assets/headlineServer.key'),
-//    cert: fs.readFileSync(rootLocation + 'Headlines/src/assets/headlineServer.crt'),
+//    key: fs.readFileSync(rootLocation + '/src/assets/headlineServer.key'),
+//    cert: fs.readFileSync(rootLocation + '/src/assets/headlineServer.crt'),
 //    passphrase: '1234'
 //};
 //
@@ -37,7 +38,6 @@ const svr = app.listen(port, function () {
 
 const io = socketIo.listen(svr);
 const serverSocket = io.sockets;
-let clientSocket;
 let connections = 0;
 
 
@@ -45,23 +45,15 @@ serverSocket.on('connection', clntSocket => {
     connections++;
     console.log('client connected: ' + clntSocket.id + '    (' + connections + ' connection(s))');
     clientSocket = clntSocket;
-});
 
+    //add a handler for news notifications
+    addNewsHandler(clientSocket.id, (newsArr, code) => {
+        clientSocket.emit('updatedNews', newsArr, code);
 
-//serverSocket.on('clientDisconnected', id => {
-//    console.log('client disconnected: ' + id + '    (' + connections + ' connection(s))');
-//});//
-
-
-//add a handler for news notifications
-setSubscr((newsArr,code)=>{
-    if (!clientSocket) return;
-
-    clientSocket.emit('updatedNews', newsArr, code);
-
-    clientSocket.on('disconnect', msg => {
-        connections--;
-        console.log('client disconnected: ' + clientSocket.id + '    (' + connections + ' connection(s))');
-        //serverSocket.emit('clientDisconnected', clientSocket.id);
+        clientSocket.on('disconnect', msg => {
+            connections--;
+            console.log('client disconnected: ' + clientSocket.id + '    (' + connections + ' connection(s))');
+            removeNewsHandler(clientSocket.id);
+        });
     });
 });

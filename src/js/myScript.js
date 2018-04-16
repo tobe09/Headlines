@@ -36,7 +36,8 @@ function showAllNews() {
         lastNewsCode = 'all';
 
         displayNews(allNews);
-    });
+    })
+        .catch(err => errorMsg('Network Error'));
 }
 
 
@@ -61,7 +62,8 @@ function showCountries() {
         let countriesList = $('#countriesList');
         const optionList = getSelectOptions(countries);
         countriesList.html(optionList);
-    });
+    })
+        .catch(err => errorMsg('Network Error'));
 }
 
 
@@ -79,7 +81,8 @@ function showSources() {
         $('#asideSources').html(htmlString);
 
         generateSourceList(sourceObject);
-    });
+    })
+        .catch(err => errorMsg('Network Error'));
 }
 
 
@@ -123,7 +126,8 @@ function handleCountryChange(countryCode, countryName) {
         lastNewsCode = countryCode;
 
         displayNews(filteredNews);
-    });
+    })
+        .catch(err => errorMsg('Network Error'));
 }
 
 
@@ -152,7 +156,8 @@ function handleSourceChange(sourceCode, sourceName) {
         lastNewsCode = sourceCode;
 
         displayNews(filteredNews);
-    });
+    })
+        .catch(err => errorMsg('Network Error'));
 }
 
 

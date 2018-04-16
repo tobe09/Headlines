@@ -20,7 +20,7 @@
 })
 
 
-let lastNewsUrl, lastNewsCode, lastNewsTime;
+let lastNewsUrl, lastNewsCode, lastNewsTime;        //track most recent news for live updating from server
 
 
 //function to get and display all news
@@ -31,9 +31,9 @@ function showAllNews() {
             return;
         }
 
-        lastNewsUrl = allNews[0].url;
-        lastNewsTime = new Date(allNews[0].publishedAt);
-        lastNewsCode = 'all';
+        lastNewsUrl = allNews[0].url;                       //hold latest news url
+        lastNewsTime = new Date(allNews[0].publishedAt);    //hold latest news published date
+        lastNewsCode = 'all';                               //hold code to track all news
 
         displayNews(allNews);
     })
@@ -42,26 +42,25 @@ function showAllNews() {
 
 
 //function to display generated news
-function displayNews(newsArr) {
-    const htmlString = getAllHtmlContent(newsArr);
-    $('#newsContent').html(htmlString)
-    $("html, body").animate({ scrollTop: 0 });
-    successMsg("Number of records: " + newsArr.length);
+function displayNews(newsArr) { 
+    const htmlString = getAllHtmlContent(newsArr);          //generate html encoded string with needed values
+    $('#newsContent').html(htmlString)                      //set as news content
+    $("html, body").animate({ scrollTop: 0 });              //scroll to top of page
+    successMsg("Number of records: " + newsArr.length);     //display number of records
 }
 
 
 //function to show countries available
 function showCountries() {
     dataApi('GET', 'sw/countries').then(countries => {
-        if (countries.Error != null) {
-            errorMsg(countries.Error);
+        if (countries.Error != null) {     
+            errorMsg(countries.Error);                       //display error from server
             $('#countriesList').html('<select><option>Not Loaded</option></select>');
             return;
         }
-
-        let countriesList = $('#countriesList');
-        const optionList = getSelectOptions(countries);
-        countriesList.html(optionList);
+        
+        const optionList = getSelectOptions(countries);     //generate select list html
+        $('#countriesList').html(optionList);
     })
         .catch(err => errorMsg('Network Error'));
 }
@@ -88,28 +87,28 @@ function showSources() {
 
 //function to generate select list of sources
 function generateSourceList(sourceObject) {
-    let sourcesList = $('#sourcesList');
     let sources = [];
 
     for (const category in sourceObject) {
-        for (const source of sourceObject[category]) sources.push(source);
+        for (const source of sourceObject[category]) sources.push(source);   //get all sources from each news category
     }
 
-    sources.sort((source1, source2) => source1[1].toLowerCase().localeCompare(source2[1].toLowerCase()));
+    //sort all sources in alphabetical order
+    sources.sort((source1, source2) => source1[1].toLowerCase().localeCompare(source2[1].toLowerCase()));       
 
     const optionList = getSelectOptions(sources);
-    sourcesList.html(optionList);
+    $('#sourcesList').html(optionList);
 }
 
 
 //function to handle change in country selected
 function handleCountryChange(countryCode, countryName) {
     basicMsg("Loading...");
-    $("#sourcesList").prop('selectedIndex', 0);
+    $("#sourcesList").prop('selectedIndex', 0);         //reset sources list
 
     if (countryCode === 'All') {
-        displayFilterValues('ALL', '');
-        showAllNews();
+        displayFilterValues('ALL', '');                 //display news header title
+        showAllNews();                                  //reload all news
         return;
     }
 
@@ -121,7 +120,7 @@ function handleCountryChange(countryCode, countryName) {
             return;
         }
 
-        lastNewsUrl = filteredNews[0].url;
+        lastNewsUrl = filteredNews[0].url;              
         lastNewsTime = new Date(filteredNews[0].publishedAt);
         lastNewsCode = countryCode;
 
@@ -165,6 +164,7 @@ function handleSourceChange(sourceCode, sourceName) {
 function displayFilterValues(type, name) {
     $("#filterType").text(type);
 
+    //to ensure that the name is not too long
     if (name.length > 20) {
         const nameArr = name.split(' ');
         name = '';
@@ -200,11 +200,6 @@ function errorMsg(msg, divMsg = $('#divMsg')) {
 function displayMsg(divMsg, msg) {
     divMsg.css("display", "block");
     divMsg.text(msg);
-}
-
-
-function hideMsg(divMsg = $('#divMsg')) {
-    divMsg.css("display", "none");
 }
 
 
@@ -320,7 +315,7 @@ function dataApi(type, url, data, async = true) {
 
 //SOCKET CONNECTION SETUP
 let socket;
-const socketInterval = setInterval(socketConnect, 20 * 1000);
+const socketInterval = setInterval(socketConnect, 20 * 1000);       //check for connection availability every 20 seconds
 socketConnect();
 
 
@@ -329,13 +324,13 @@ function socketConnect() {
     const address = 'https://headlines-tobe.herokuapp.com';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
     socket = io.connect(address);
     if (!socket) return;
-    else clearInterval(socketInterval);
+    else clearInterval(socketInterval);             //clear connection checking
 
     socket.on('updatedNews', (newsArr, code) => {
-        if (lastNewsCode !== code || lastNewsCode == null) return;
+        if (lastNewsCode !== code || lastNewsCode == null) return;      //validate socket code to ensure that it tallies with current session
 
         for (let i = 0; i < newsArr.length; i++) {
-            if (lastNewsUrl === newsArr[i].url) {
+            if (lastNewsUrl === newsArr[i].url) {                       //get last url to begin update
                 if (i === 0) return;
                 const updNewsArr = newsArr.slice(0, i);
                 updateNews(updNewsArr);
@@ -343,7 +338,7 @@ function socketConnect() {
             }
         }
 
-        if (new Date(newsArr[0].publishedAt) > lastNewsTime && lastNewsTime) {
+        if (lastNewsTime && new Date(newsArr[newsArr.length - 1].publishedAt) > lastNewsTime) {  //update with all entries for new articles
             updateNews(newsArr);
         }
     })
@@ -432,33 +427,41 @@ function notificationSetup() {
 }
 
 
+//function to show notification panel/div
 function showNotifDiv() {
     $('.notifDiv').css('display', 'block');
 }
 
 
+//function to gide notification panel/div
 function hideNotifDiv() {
     $('.notifDiv').css('display', 'none');
 }
 
+
+//function to set notification status as 'yes'/subscribed
 function notifSelectOn() {
     $('#notifYes').addClass('focus active');
     $('#notifNo').removeClass('focus active');
 }
 
 
+//function to set notification status as 'no'/unsubscribed
 function notifSelectOff() {
     $('#notifNo').addClass('focus active');
     $('#notifYes').removeClass('focus active');
 }
 
 
+//function to disable notification buttons
 function disableNotifBtns() {
     $("#notifNo").css("opacity", 0.2);
     $("#notifYes").css("opacity", 0.2);
     return;
 }
 
+
+//function to enable notification buttons
 function enableNotifBtns() {
     $("#notifNo").css("opacity", 1);
     $("#notifYes").css("opacity", 1);

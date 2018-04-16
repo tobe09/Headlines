@@ -49,17 +49,17 @@ self.addEventListener('activate', event => {
     );
 });
 
-//handles fetch event of service worker//
+//handles fetch event of service worker
 self.addEventListener('fetch', (event) => {
     let requestUrl = new URL(event.request.url);
     if (requestUrl.origin === location.origin) {
         if (requestUrl.pathname.startsWith('/sw/')) {
             let response;
-            if (requestUrl.pathname === '/sw/allNews') response = getAllNews();
-            else if (requestUrl.pathname === '/sw/countries') response = getCountries();
-            else if (requestUrl.pathname === '/sw/sources') response = getSources();
-            else if (requestUrl.pathname.startsWith('/sw/byCountry')) response = getByCountry(requestUrl.pathname);
-            else if (requestUrl.pathname.startsWith('/sw/bySource')) response = getBySource(requestUrl.pathname);
+            if (requestUrl.pathname.startsWith('/sw/allNews')) response = getAllNews(event.request.url);
+            else if (requestUrl.pathname === '/sw/countries') response = getCountries(event.request.url);
+            else if (requestUrl.pathname === '/sw/sources') response = getSources(event.request.url);
+            else if (requestUrl.pathname.startsWith('/sw/byCountry')) response = getByCountry(event.request.url);
+            else if (requestUrl.pathname.startsWith('/sw/bySource')) response = getBySource(event.request.url);
             else response = fetch(event.request);
 
             event.respondWith(response);
@@ -87,6 +87,8 @@ self.addEventListener('fetch', (event) => {
 
 //returns a promise that resolves to an idb promise database
 function dbPromise() {
+    if (!idb) return Promise.resolve();
+
     let newDbVersion = 3;
     return idb.open('headline', newDbVersion, upgradeDb => {
         switch (upgradeDb.oldVersion) {
@@ -108,7 +110,7 @@ function dbPromise() {
 
 
 //returns all news from idb/network and saves new articles
-function getAllNews() {
+function getAllNews(url) {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveAllNews();
 
@@ -123,7 +125,7 @@ function getAllNews() {
     })
 
     function fetchAndSaveAllNews() {
-        return fetch('/sw/allNews').then(response => {
+        return fetch(url).then(response => {
             return response.json().then(articles => {
                 if (articles.Error) return getJsonResponse(articles);
 
@@ -134,14 +136,14 @@ function getAllNews() {
                 return getJsonResponse(articles);
             })
         }).catch(err => {
-            return getJsonResponse({ Error: "Network Error (All)" });
+            return getJsonResponse({ Error: "Fetch Error (All)" });
         });
     }
 }
 
 
 //returns all sources from idb/network and saves sources (to account for changes)
-function getSources() {
+function getSources(url) {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveSources();
 
@@ -156,7 +158,7 @@ function getSources() {
     })
 
     function fetchAndSaveSources() {
-        return fetch('/sw/sources').then(response => {
+        return fetch(url).then(response => {
             return response.json().then(sourceObject => {
                 if (sourceObject.Error) return getJsonResponse(sourceObject);
 
@@ -165,14 +167,14 @@ function getSources() {
                 return getJsonResponse(sourceObject);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Network Error (Sources)" });
+            return getJsonResponse({ Error: "Fetch Error (Sources)" });
         });
     }
 }
 
 
 //returns all countries from idb/network and saves countries (to account for changes)
-function getCountries() {
+function getCountries(url) {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveSources();
 
@@ -187,7 +189,7 @@ function getCountries() {
     })
 
     function fetchAndSaveCountries() {
-        return fetch('/sw/countries').then(response => {
+        return fetch(url).then(response => {
             return response.json().then(countriesObject => {
                 if (countriesObject.Error) return getJsonResponse(countriesObject);
 
@@ -196,15 +198,15 @@ function getCountries() {
                 return getJsonResponse(countriesObject);
             })
         }).catch(err => {
-            return getJsonResponse({ Error: "Network Error (Countries)" });
+            return getJsonResponse({ Error: "Fetch Error (Countries)" });
         });
     }
 }
 
 
 //returns news filtered by country name from idb/network and saves new articles
-function getByCountry(path) {
-    const pathInfo = path.split('/')
+function getByCountry(url) {
+    const pathInfo = url.split('/')
     const countryCode = pathInfo[pathInfo.length - 1];
 
     return dbPromise().then(db => {
@@ -222,7 +224,7 @@ function getByCountry(path) {
     })
 
     function fetchAndSaveByCountry() {
-        return fetch('sw/byCountry/' + countryCode).then(response => {
+        return fetch(url).then(response => {
             return response.json().then(articles => {
                 if (articles.Error) return getJsonResponse(articles);
 
@@ -233,15 +235,15 @@ function getByCountry(path) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Network Error (Country Code: " + countryCode + ")" });
+            return getJsonResponse({ Error: "Fetch Error (Country Code: " + countryCode + ")" });
         });
     }
 }
 
 
 //returns news filtered by source name from idb/network and saves new articles
-function getBySource(path) {
-    const pathInfo = path.split('/')
+function getBySource(url) {
+    const pathInfo = url.split('/')
     const sourceCode = pathInfo[pathInfo.length - 1];
 
     return dbPromise().then(db => {
@@ -259,7 +261,7 @@ function getBySource(path) {
     })
 
     function fetchAndSaveBySource() {
-        return fetch('sw/bySource/'+sourceCode).then(response => {
+        return fetch(url).then(response => {
             return response.json().then(articles => {
                 if (articles.Error) return getJsonResponse(articles);
 
@@ -270,7 +272,7 @@ function getBySource(path) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Network Error (Source Code: " + sourceCode + ")"  });
+            return getJsonResponse({ Error: "Fetch Error (Source Code: " + sourceCode + ")"  });
         });
     }
 }

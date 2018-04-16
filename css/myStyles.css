@@ -92,6 +92,7 @@ select{
 .notifDiv{
     float:left;
     margin-top:5px;
+    display:none;
 }
  
 #newsContent{

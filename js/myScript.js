@@ -25,7 +25,7 @@ let lastNewsUrl, lastNewsCode, lastNewsTime;
 
 //function to get and display all news
 function showAllNews() {
-    dataApi('GET', 'sw/allNews').then(allNews => {
+    dataApi('GET', 'sw/allNews?socketId=' + getSocketId()).then(allNews => {
         if (allNews.Error != null) {
             errorMsg(allNews.Error);
             return;
@@ -36,7 +36,7 @@ function showAllNews() {
         lastNewsCode = 'all';
 
         displayNews(allNews);
-    })
+    });
 }
 
 
@@ -112,7 +112,7 @@ function handleCountryChange(countryCode, countryName) {
 
     displayFilterValues('COUNTRY -', countryName);
 
-    dataApi('GET', 'sw/byCountry/' + countryCode).then(filteredNews => {
+    dataApi('GET', 'sw/byCountry/' + countryCode + '?socketId' + getSocketId()).then(filteredNews => {
         if (filteredNews.Error != null) {
             errorMsg(filteredNews.Error);
             return;
@@ -141,7 +141,7 @@ function handleSourceChange(sourceCode, sourceName) {
 
     displayFilterValues('SOURCE -', sourceName)
 
-    dataApi('GET', 'sw/bySource/' + sourceCode).then(filteredNews => {
+    dataApi('GET', 'sw/bySource/' + sourceCode + '?socketId' + getSocketId()).then(filteredNews => {
         if (filteredNews.Error != null) {
             errorMsg(filteredNews.Error);
             return;
@@ -345,6 +345,14 @@ function socketConnect() {
 }
 
 
+//function to get socket id
+function getSocketId() {
+    const socketId = socket ? socket.id : 'none';
+
+    return socketId || 'none';
+}
+
+
 //function to display updated news
 function updateNews(newsArr) {
     const oldHtml = $('#newsContent').html();
@@ -391,7 +399,8 @@ function notificationSetup() {
                 .then(result => {
                     if (result === 'default') errorMsg("Live news subscription unsuccessful");
                     else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings.");
-                    else successMsg("Live news subscription successful");
+                    else if (result.Error && result.Error != '') errorMsg(result.Error);
+                    else successMsg("Live news subscription unsuccessful");
                 })
                 .catch(err => {
                     unsubscribePushNotif();

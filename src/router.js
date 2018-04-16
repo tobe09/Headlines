@@ -71,37 +71,36 @@ function getValidCountryCode(countryCode) {
 
 //get all news
 router.get('/sw/allNews', function (req, res) {
-    let promiseChain = Promise.resolve();
+    const ipArr = req.ip.split(':');
+    const clientIp = ipArr[ipArr.length - 1];
+    let socketId = req.param('socketId');
 
-    promiseChain.then(() => {
-        const ipArr = req.ip.split(':');
-        const clientIp = ipArr[ipArr.length - 1];
+    const ipLocator = require("node-iplocate");
 
-        const ipLocator = require("node-iplocate");
-        
-        return ipLocator(clientIp).then(payload => {
-            const countryCode = payload.country_code.toLowerCase();
-            const validCountryCode = getValidCountryCode(countryCode);
+    ipLocator(clientIp).then(payload => {
+        const countryCode = payload.country_code.toLowerCase();
+        const validCountryCode = getValidCountryCode(countryCode);
 
-            return validCountryCode;
-        })
-            .catch(err => "ng");
-    }).then(countryCode => {
-        const pageSize = 30;
-        const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode + '&pageSize=' + pageSize + '&apiKey=' + newsApiKey;
+        return validCountryCode;
+    })
+        .catch(err => "ng")
+        .then(countryCode => {
+            const pageSize = 30;
+            const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode +
+                '&pageSize=' + pageSize + '&apiKey=' + newsApiKey;
 
-        fetch(newsApiUrl).then(response => {
-            response.json().then(jsonData => {
-                const articles = jsonData.articles;
-                articles.sort(sortArticles);
+            fetch(newsApiUrl).then(response => {
+                response.json().then(jsonData => {
+                    const articles = jsonData.articles;
+                    articles.sort(sortArticles);
 
-                notifySubscr(articles, 'all');
-                res.json(articles);             //send response back to client
-            })
-        }).catch(err => {
-            res.json({ Error: "Network Error (All)" });
+                    res.json(articles);                     //send response back to client
+                    notifyClientSocket(socketId, articles, 'all');    //notify client socket to check for news updates (offline first feature)
+                })
+            }).catch(err => {
+                res.json({ Error: "Network Error (All)" });
+            });
         });
-    });
 });
 
 
@@ -148,6 +147,7 @@ router.get('/sw/countries', function (req, res) {
 //get news filtered by source
 router.get('/sw/bySource/:sourceCode', function (req, res) {
     const sourceCode = req.params.sourceCode;
+    let socketId = req.param('socketId');
     const bySoruceUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&sources=' + sourceCode + '&apiKey=' + newsApiKey;
 
     fetch(bySoruceUrl).then(response => {
@@ -159,8 +159,8 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
                 article.urlBySourceCode = article.url + sourceCode;
             }
 
-            notifySubscr(articles, sourceCode);
-            res.json(articles);        //send response back to client
+            res.json(articles);        
+            notifyClientSocket(socketId, articles, sourceCode);
         })
     }).catch(err => {
         res.json({ Error: "Network Error (Source Code: " + sourceCode + ")" });
@@ -171,6 +171,7 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
 //get news filtered by country
 router.get('/sw/byCountry/:countryCode', function (req, res) {
     const countryCode = req.params.countryCode;
+    let socketId = req.param('socketId');
     const byCountryUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode + '&apiKey=' + newsApiKey;
 
     fetch(byCountryUrl).then(response => {
@@ -182,8 +183,8 @@ router.get('/sw/byCountry/:countryCode', function (req, res) {
                 article.urlByCountryCode = article.url + countryCode;
             }
 
-            notifySubscr(articles, countryCode);
-            res.json(articles);        //send response back to client
+            res.json(articles);        
+            notifyClientSocket(socketId, articles, countryCode);
         })
     }).catch(err => {
         res.json({ Error: "Network Error (Country Code: " + countryCode + ")" });
@@ -278,37 +279,32 @@ function deleteSubFromDb(id) {
 
 
 //FOR SOCKET PUBLISHING
-const newsSubsc=[];         //array of handler functions
+const newsSocketClients = {};         //object of handler functions
 
 
 //add subscribing handler functions for news update
-function setSubscr(id, handler){
-    newsSubsc.push({ id, handler }); 
+function addNewsHandler(id, handler) {
+    newsSocketClients[id + ''] = handler;
 }
 
 
 //notify subscribing functions of news update
-function notifySubscr(newsArr, code) {
-    for (const handle of newsSubsc) {
-        handle.handler(newsArr, code);
+function notifyClientSocket(id, newsArr, code) {
+    if (id != 'none') {
+        newsSocketClients[id](newsArr, code);
     }
 }
 
 
 //remove subscribing functions from news update
-function removeSubscr(id) {
-    for (let i = 0; i < newsSubsc.length; i++) {
-        if (newsSubsc[i].id === id) {
-            newsSubsc.splice(i, 1);
-            return
-        }
-    }
+function removeNewsHandler(id) {
+    delete newsSocketClients[id + ''];
 }
 
 
 
 module.exports = {
     router,
-    setSubscr,
-    removeSubscr
+    addNewsHandler,
+    removeNewsHandler
 };

@@ -73,7 +73,7 @@ function getValidCountryCode(countryCode) {
 router.get('/sw/allNews', function (req, res) {
     const ipArr = req.ip.split(':');
     const clientIp = ipArr[ipArr.length - 1];
-    let socketId = req.param('socketId');
+    const socketId = req.query.socketId;
 
     const ipLocator = require("node-iplocate");
 
@@ -147,7 +147,7 @@ router.get('/sw/countries', function (req, res) {
 //get news filtered by source
 router.get('/sw/bySource/:sourceCode', function (req, res) {
     const sourceCode = req.params.sourceCode;
-    let socketId = req.param('socketId');
+    const socketId = req.query.socketId;
     const bySoruceUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&sources=' + sourceCode + '&apiKey=' + newsApiKey;
 
     fetch(bySoruceUrl).then(response => {
@@ -171,7 +171,7 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
 //get news filtered by country
 router.get('/sw/byCountry/:countryCode', function (req, res) {
     const countryCode = req.params.countryCode;
-    let socketId = req.param('socketId');
+    const socketId = req.query.socketId;
     const byCountryUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode + '&apiKey=' + newsApiKey;
 
     fetch(byCountryUrl).then(response => {

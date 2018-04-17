@@ -1,9 +1,9 @@
 ﻿self.importScripts('/node_modules/idb/lib/idb.js');            //import indexed db promise file
 
 
-const newCache = 'headlines-static-3';
+const staticCache = 'headlines-static-3';
 const imgCache = 'headlines-content-imgs';
-const allCaches = [newCache, imgCache];
+const allCaches = [staticCache, imgCache];
 
 
 //handles install event of service worker
@@ -27,12 +27,12 @@ self.addEventListener('install', event => {
         '/src/assets/images/headlinesRed.jpg'
     ];
 
-    event.waitUntil((function () {
-        return caches.open(newCache)
+    event.waitUntil(
+        caches.open(staticCache)
             .then(cache => cache.addAll(urlToCache))
             .then(() => caches.open(imgCache))
-            .then(cache => cache.addAll(imgToCache));
-    })());
+            .then(cache => cache.addAll(imgToCache))
+    );
 })
 
 
@@ -49,17 +49,18 @@ self.addEventListener('activate', event => {
     );
 });
 
+
 //handles fetch event of service worker
 self.addEventListener('fetch', (event) => {
     let requestUrl = new URL(event.request.url);
     if (requestUrl.origin === location.origin) {
-        if (requestUrl.pathname.startsWith('/sw/')) {
+        if (requestUrl.pathname.startsWith('/news/')) {
             let response;
-            if (requestUrl.pathname === '/sw/allNews') response = getAllNews(event.request.url);
-            else if (requestUrl.pathname === '/sw/countries') response = getCountries(event.request.url);
-            else if (requestUrl.pathname === '/sw/sources') response = getSources(event.request.url);
-            else if (requestUrl.pathname === '/sw/byCountry') response = getByCountry(event.request.url);
-            else if (requestUrl.pathname === '/sw/bySource') response = getBySource(event.request.url);
+            if (requestUrl.pathname.startsWith('/news/allNews')) response = getAllNews(event.request.url);
+            else if (requestUrl.pathname === '/news/countries') response = getCountries(event.request.url);
+            else if (requestUrl.pathname === '/news/sources') response = getSources(event.request.url);
+            else if (requestUrl.pathname.startsWith('/news/byCountry')) response = getByCountry(event.request.url);
+            else if (requestUrl.pathname.startsWith('/news/bySource')) response = getBySource(event.request.url);
             else response = fetch(event.request);
 
             event.respondWith(response);
@@ -73,10 +74,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    //get other responses
     event.respondWith(fetch(event.request).then(response => {
         if (!response.ok && (event.request.url.endsWith('.jpg') || event.request.url.endsWith('.jpg') || event.request.url.endsWith('.jpg'))) {
             const urlArr = event.request.url.split('/');
-            const imgHost = urlArr[0] + '//' + urlArr[2];
+            const imgHost = urlArr[0] + '//' + urlArr[2];       //attempt to generate referer for blocked/protected images
 
             return fetch(event.request, { method: 'GET', headers: { Referer: imgHost } })
         }
@@ -101,7 +103,6 @@ function dbPromise() {
                 const sourcesStore = upgradeDb.createObjectStore('sources', { keyPath: 'sourceId' });
                 const countryStore = upgradeDb.createObjectStore('countries', { keyPath: 'countryId' });
             case 2:
-                //allNewsStore.createIndex('by-date', ['publishedAt', 'source.name', 'author'], { unique: true });
                 allNewsStore.createIndex('by-date', ['publishedAt', 'url']);
                 countryNewsStore.createIndex('by-date', ['publishedAt', 'url']);
                 sourceNewsStore.createIndex('by-date', ['publishedAt', 'url']);
@@ -281,7 +282,6 @@ function getBySource(url) {
 }
 
 
-//due to specification differences (as regards transactions and promises), not compatible in firefox
 //helper function to save news articles
 function saveNews(storeName, news) {
     return dbPromise().then(db => {
@@ -290,31 +290,20 @@ function saveNews(storeName, news) {
         let tx = db.transaction(storeName, 'readwrite');
         let newsStore = tx.objectStore(storeName);
 
-        let promiseChain = Promise.resolve();
+//due to specification differences (as regards transactions, indexed db closing and promises), 
+//works in chrome but not compatible in firefox and most browsers
+        //let promiseChain = Promise.resolve();
+        //news.forEach(singleNews => {
+        //    promiseChain = promiseChain.then(val => newsStore.put(singleNews));
+        //});
 
-        news.forEach(singleNews => {
-            promiseChain = promiseChain.then(val => newsStore.put(singleNews));
-        });
+        //return promiseChain;
 
-        return promiseChain;
+        return Promise.all(
+            news.map(singleNews => newsStore.put(singleNews))
+        );
     })
 }
-
-//due to specification differences (as regards transactions and promises), not compatible in chrome
-//helper function to save news articles
-function saveNewsF(storeName, news) {
-    return dbPromise().then(db => {
-        if (!db) return;
-
-        let tx = db.transaction(storeName, 'readwrite');
-        let newsStore = tx.objectStore(storeName);
-
-        news.forEach(singleNews => {
-            newsStore.put(singleNews);
-        });
-    })
-}
-
 
 //helper function to save countries and sources
 function saveValues(storeName, object, objectId, id) {
@@ -333,9 +322,37 @@ function saveValues(storeName, object, objectId, id) {
 }
 
 
-//due to specification differences (as regards transactions and promises), not compatible in firefox
 //function to clean general news store
 function cleanAllNewsDb(storeName, count) {
+    return dbPromise().then(db => {
+        if (!db) return;
+
+        let tx = db.transaction(storeName, 'readwrite');
+        let store = tx.objectStore(storeName);
+
+        return store.index('by-date').getAll().then(news => {
+            news = news.reverse();
+
+            tx = db.transaction(storeName, 'readwrite');
+            store = tx.objectStore(storeName);
+
+            let promiseArr = [];
+            for (let i = count; i < news.length; i++) {
+                promiseArr.push(
+                    store.delete(news[i]['url'])
+                );
+            }
+
+            return Promise.all(promiseArr);
+        })
+    });
+}
+
+
+//due to specification differences (as regards transactions, indexed db closing and promises), 
+//works in chrome but not compatible in firefox and most browsers
+//function to clean general news store (not used)
+function cleanAllNewsDb_Old(storeName, count) {
     return dbPromise().then(db => {
         if (!db) return;
 
@@ -353,30 +370,7 @@ function cleanAllNewsDb(storeName, count) {
     });
 }
 
-//due to specification differences (as regards transactions and promises), not compatible in chrome
-//function to clean general news store
-function cleanAllNewsDbF(storeName, count) {
-    return dbPromise().then(db => {
-        if (!db) return;
 
-        let tx = db.transaction(storeName, 'readwrite');
-        let store = tx.objectStore(storeName);
-
-        return store.index('by-date').getAll().then(news => {
-            news = news.reverse();
-
-            tx = db.transaction(storeName, 'readwrite');
-            store = tx.objectStore(storeName);
-            
-            for (let i = count; i < news.length; i++) {
-                store.delete(news[i]['url']);
-            }
-        })
-    });
-}
-
-
-//due to specification differences (as regards transactions and promises), not compatible in firefox
 //function to clean up filtered new store
 function cleanFilteredNewsDb(storeName, filterCount, key, filter) {
     return dbPromise().then(db => {
@@ -389,46 +383,27 @@ function cleanFilteredNewsDb(storeName, filterCount, key, filter) {
             news = news.reverse();
             const maxCount = 1000;
 
-            let promiseChain = Promise.resolve();
-
-            for (let i = maxCount; i < news.length; i++) {
-                promiseChain = promiseChain.then(val => store.delete(news[i][key]));
-            }
-
-            const filteredNews = news.filter(singleNews => singleNews[key].endsWith(filter));
-            for (let i = filterCount; i < filteredNews.length; i++) {
-                promiseChain = promiseChain.then(val => store.delete(filteredNews[i][key]));
-            }
-
-            return promiseChain;
-        });
-    });
-}
-
-//due to specification differences (as regards transactions and promises), not compatible in chrome
-//function to clean up filtered new store
-function cleanFilteredNewsDbF(storeName, filterCount, key, filter) {
-    return dbPromise().then(db => {
-        if (!db) return;
-
-        let tx = db.transaction(storeName, 'readwrite');
-        let store = tx.objectStore(storeName);
-
-        return store.index('by-date').getAll().then(news => {
-            news = news.reverse();
-            const maxCount = 1000;
-
             tx = db.transaction(storeName, 'readwrite');
             store = tx.objectStore(storeName);
 
+            let promiseArr = [];
+			
+            //for total news in source/country store
             for (let i = maxCount; i < news.length; i++) {
-                store.delete(news[i][key]);
+                promiseArr.push(
+                    store.delete(news[i][key])
+                );
             }
-
+			
+            //for total news by source/country (filterCount = maximum news for each source/country)
             const filteredNews = news.filter(singleNews => singleNews[key].endsWith(filter));
             for (let i = filterCount; i < filteredNews.length; i++) {
-                store.delete(filteredNews[i][key]);
+                promiseArr.push(
+                    store.delete(filteredNews[i][key])
+                );
             }
+
+            return Promise.all(promiseArr);
         });
     });
 }

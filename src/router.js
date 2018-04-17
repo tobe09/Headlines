@@ -70,7 +70,7 @@ function getValidCountryCode(countryCode) {
 
 
 //get all news
-router.get('/sw/allNews', function (req, res) {
+router.get('/news/allNews', function (req, res) {
     const ipArr = req.ip.split(':');
     const clientIp = ipArr[ipArr.length - 1];
     const socketId = req.query.socketId;
@@ -105,7 +105,7 @@ router.get('/sw/allNews', function (req, res) {
 
 
 //get all sources
-router.get('/sw/sources', function (req, res) {
+router.get('/news/sources', function (req, res) {
     const sourcesUrl = 'https://newsapi.org/v2/sources?apiKey=' + newsApiKey;
 
     fetch(sourcesUrl).then(response => {
@@ -138,14 +138,14 @@ router.get('/sw/sources', function (req, res) {
 
 
 //get all countries
-router.get('/sw/countries', function (req, res) {  
+router.get('/news/countries', function (req, res) {  
     //countries.sort((country1, country2) => country1[1].toLowerCase().localeCompare(country2[1].toLowerCase()));
     res.json(countries);
 });
 
 
 //get news filtered by source
-router.get('/sw/bySource/:sourceCode', function (req, res) {
+router.get('/news/bySource/:sourceCode', function (req, res) {
     const sourceCode = req.params.sourceCode;
     const socketId = req.query.socketId;
     const bySoruceUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&sources=' + sourceCode + '&apiKey=' + newsApiKey;
@@ -169,7 +169,7 @@ router.get('/sw/bySource/:sourceCode', function (req, res) {
 
 
 //get news filtered by country
-router.get('/sw/byCountry/:countryCode', function (req, res) {
+router.get('/news/byCountry/:countryCode', function (req, res) {
     const countryCode = req.params.countryCode;
     const socketId = req.query.socketId;
     const byCountryUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode + '&apiKey=' + newsApiKey;

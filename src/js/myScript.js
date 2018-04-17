@@ -25,34 +25,14 @@ let lastNewsUrl, lastNewsCode, lastNewsTime;        //track most recent news for
 
 //function to get and display all news
 function showAllNews() {
-    dataApi('GET', 'sw/allNews?socketId=' + getSocketId()).then(allNews => {
-        if (allNews.Error != null) {
-            errorMsg(allNews.Error);
-            return;
-        }
-
-        lastNewsUrl = allNews[0].url;                       //hold latest news url
-        lastNewsTime = new Date(allNews[0].publishedAt);    //hold latest news published date
-        lastNewsCode = 'all';                               //hold code to track all news
-
-        displayNews(allNews);
-    })
-        .catch(err => errorMsg('Network Error'));
-}
-
-
-//function to display generated news
-function displayNews(newsArr) { 
-    const htmlString = getAllHtmlContent(newsArr);          //generate html encoded string with needed values
-    $('#newsContent').html(htmlString)                      //set as news content
-    $("html, body").animate({ scrollTop: 0 });              //scroll to top of page
-    successMsg("Number of records: " + newsArr.length);     //display number of records
+    const url = 'news/allNews?socketId=' + getSocketId();
+    displayAjaxInfo(url, 'all');
 }
 
 
 //function to show countries available
 function showCountries() {
-    dataApi('GET', 'sw/countries').then(countries => {
+    dataApi('GET', 'news/countries').then(countries => {
         if (countries.Error != null) {     
             errorMsg(countries.Error);                       //display error from server
             $('#countriesList').html('<select><option>Not Loaded</option></select>');
@@ -68,7 +48,7 @@ function showCountries() {
 
 //function to show sources available
 function showSources() {
-    dataApi('GET', 'sw/sources').then(sourceObject => {
+    dataApi('GET', 'news/sources').then(sourceObject => {
         if (sourceObject.Error != null) {
             errorMsg(sourceObject.Error);
             errorMsg('Error Loading Sources', $('#asideSources'));
@@ -114,19 +94,8 @@ function handleCountryChange(countryCode, countryName) {
 
     displayFilterValues('COUNTRY -', countryName);
 
-    dataApi('GET', 'sw/byCountry/' + countryCode + '?socketId=' + getSocketId()).then(filteredNews => {
-        if (filteredNews.Error != null) {
-            errorMsg(filteredNews.Error);
-            return;
-        }
-
-        lastNewsUrl = filteredNews[0].url;              
-        lastNewsTime = new Date(filteredNews[0].publishedAt);
-        lastNewsCode = countryCode;
-
-        displayNews(filteredNews);
-    })
-        .catch(err => errorMsg('Network Error'));
+    const url = 'news/byCountry/' + countryCode + '?socketId=' + getSocketId();
+    displayAjaxInfo(url, countryCode);
 }
 
 
@@ -144,21 +113,41 @@ function handleSourceChange(sourceCode, sourceName) {
 
     displayFilterValues('SOURCE -', sourceName)
 
-    dataApi('GET', 'sw/bySource/' + sourceCode + '?socketId=' + getSocketId()).then(filteredNews => {
-        if (filteredNews.Error != null) {
-            errorMsg(filteredNews.Error);
+    const url = 'news/bySource/' + sourceCode + '?socketId=' + getSocketId();
+    displayAjaxInfo(url, sourceCode);
+}
+
+
+//function to generate information from ajax call
+function displayAjaxInfo(url, code) {
+    dataApi('GET', url).then(allNews => {
+        if (allNews.Error != null) {
+            errorMsg(allNews.Error);
             return;
         }
 
-        lastNewsUrl = filteredNews[0].url;
-        lastNewsTime = new Date(filteredNews[0].publishedAt);
-        lastNewsCode = sourceCode;
-
-        displayNews(filteredNews);
+        setLatestDetails(allNews[0], code);
+        displayNews(allNews);
     })
         .catch(err => errorMsg('Network Error'));
 }
 
+
+//function to display generated news
+function displayNews(newsArr) {
+    const htmlString = getAllHtmlContent(newsArr);          //generate html encoded string with needed values
+    $('#newsContent').html(htmlString)                      //set as news content
+    $("html, body").animate({ scrollTop: 0 });              //scroll to top of page
+    successMsg("Number of records: " + newsArr.length);     //display number of records
+}
+
+
+//function to set last details
+function setLatestDetails(latestArticle, code) {
+    lastNewsUrl = latestArticle.url;                        //hold latest news url
+    lastNewsTime = new Date(latestArticle.publishedAt);     //hold latest news published date
+    lastNewsCode = code;                                    //hold code to track all news
+}
 
 //function to display filtering constraints for articles
 function displayFilterValues(type, name) {
@@ -404,7 +393,7 @@ function notificationSetup() {
                 })
                 .catch(err => {
                     unsubscribePushNotif();
-                    notifSelectOff();
+                    putNotifBtnOff();
                     errorMsg("Live news subscription failed");
                 })
         }).then(() => enableNotifBtns());
@@ -419,7 +408,7 @@ function notificationSetup() {
             return unsubscribePushNotif()
                 .then(val => successMsg("Live news successfully unsubscribed"))
                 .catch(err => {
-                    notifSelectOn();
+                    putNotifBtnOn();
                     errorMsg("Live news unsubscription failed");
                 })
         }).then(() => enableNotifBtns());
@@ -440,14 +429,14 @@ function hideNotifDiv() {
 
 
 //function to set notification status as 'yes'/subscribed
-function notifSelectOn() {
+function putNotifBtnOn() {
     $('#notifYes').addClass('focus active');
     $('#notifNo').removeClass('focus active');
 }
 
 
 //function to set notification status as 'no'/unsubscribed
-function notifSelectOff() {
+function putNotifBtnOff() {
     $('#notifNo').addClass('focus active');
     $('#notifYes').removeClass('focus active');
 }
@@ -479,7 +468,7 @@ function setNotifState(result) {
     }
 
     getPushSubscription().then(subscription => {
-        subscription ? notifSelectOn() : notifSelectOff();
+        subscription ? putNotifBtnOn() : putNotifBtnOff();
     })
 }
 
@@ -502,7 +491,7 @@ function subscribeUserToPush() {
         };
         return reg.pushManager.subscribe(subscriptionOptions);
     }).then(pushSubscription => {
-        notifSelectOn();
+        putNotifBtnOn();
         return sendSubscriptionToServer(pushSubscription.toJSON());
     })
 }

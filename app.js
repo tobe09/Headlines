@@ -41,10 +41,9 @@ const serverSocket = io.sockets;
 let connections = 0;
 
 
-serverSocket.on('connection', clntSocket => {
+serverSocket.on('connection', clientSocket => {
     connections++;
-    console.log('client connected: ' + clntSocket.id + '    (' + connections + ' connection(s))');
-    clientSocket = clntSocket;
+    console.log('client connected: ' + clientSocket.id + '    (' + connections + ' connection(s))');
 
     //add a handler for news notifications
     addNewsHandler(clientSocket.id, (newsArr, code) => {

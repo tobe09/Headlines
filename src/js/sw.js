@@ -432,8 +432,9 @@ self.addEventListener('push', event => {
             body: article.title,
             icon: '/src/assets/images/headlines.ico',
             image: article.urlToImage || '/src/assets/images/noImage.png',
-            vibrate: [500, 100, 400, 80, 300, 80, 200, 60, 100, 50, 80],
+            vibrate: [500, 100, 300, 100, 200],
             tag: 'newsNotiification',
+            data: article,
             actions: [{ action: 'open', title: 'OPEN', icon: '/src/assets/images/headlines.ico' },
                 { action: 'dismiss', title: 'DISMISS', icon: '/src/assets/images/headlinesRed.jpg' }]
         }
@@ -452,18 +453,22 @@ self.addEventListener('notificationclick', event => {
         return;
     }
 
-    const urlToOpen = self.location.origin + '/';     
+    const urlToOpen = self.location.origin + '/'; 
+    const article = event.notification.data;
+
     const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
         for (const myClient of myClients) {
             if (myClient.url === urlToOpen) {
-                return myClient.focus().then(val => {
-                    return myClient.postMessage({ key: 'refresh' });
-                })
+                return myClient.focus().then(currentClient => {
+                    return currentClient.postMessage({ article });              //send article to focused client
+                });
             }
         }
-
-        return clients.openWindow(urlToOpen);
-    })
+        
+        return clients.openWindow(urlToOpen).then(myClient => {
+            setTimeout(() => myClient.postMessage({ article }), 2 * 1000);      //send article after a 2 second delay
+        });
+    });
 
     event.waitUntil(promiseChain);
 })

@@ -154,11 +154,12 @@ function displayFilterValues(type, name) {
     $("#filterType").text(type);
 
     //to ensure that the name is not too long
-    if (name.length > 20) {
+    const maxNameLength = 25;
+    if (name.length > maxNameLength) {
         const nameArr = name.split(' ');
         name = '';
         for (let count = 0; count < nameArr.length; count++) {
-            if ((name + nameArr[count]).length > 20) break;
+            if ((name + nameArr[count]).length > maxNameLength) break;
             name += ' ' + nameArr[count];
         }
         name = name.substring(1);
@@ -260,10 +261,18 @@ function getResolvedDate(dateStr) {
     const month = monthNames[date.getMonth()];
     const day = date.getDate();
     const wkDay = weekDays[date.getDay()];
-    const hour = date.getHours() < 10 ? '0' + date.getHours() : date.getHours();
+    const hr = date.getHours();
+
+    let hour;
+    if (hr === 0) hour = '12';
+    else if (hr <= 10) hour = '0' + hr;
+    else if (hr <= 12) hour = hr + '';
+    else hour = (hr - 12) + '';
+
+    const meridean = hr > 11 ? 'PM' : 'AM';
     const min = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
 
-    return `${wkDay}, ${day}${dateSuffix(day)} ${month}, ${year} &nbsp;&nbsp;&nbsp;(${hour}:${min})`;
+    return `${wkDay}, ${day}${dateSuffix(day)} ${month}, ${year} &nbsp;&nbsp;&nbsp;(${hour}:${min} ${meridean})`;
 }
 
 
@@ -310,7 +319,7 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    const address = 'https://headlines-tobe.herokuapp.com';            ////http://localhost:3000 //http://localhost:1337 //https://headlines-tobe.herokuapp.com/
+    const address = 'https://headlines-tobe.herokuapp.com';
     socket = io.connect(address);
     if (!socket) return;
     else clearInterval(socketInterval);             //clear connection checking

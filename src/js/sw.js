@@ -386,15 +386,15 @@ function cleanFilteredNewsDb(storeName, filterCount, key, filter) {
             tx = db.transaction(storeName, 'readwrite');
             store = tx.objectStore(storeName);
 
-            let promiseArr = [];
-			
+            let promiseArr = [];        
+
             //for total news in source/country store
             for (let i = maxCount; i < news.length; i++) {
                 promiseArr.push(
                     store.delete(news[i][key])
                 );
             }
-			
+
             //for total news by source/country (filterCount = maximum news for each source/country)
             const filteredNews = news.filter(singleNews => singleNews[key].endsWith(filter));
             for (let i = filterCount; i < filteredNews.length; i++) {
@@ -467,4 +467,3 @@ self.addEventListener('notificationclick', event => {
 
     event.waitUntil(promiseChain);
 })
-////////

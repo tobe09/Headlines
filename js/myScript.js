@@ -262,14 +262,8 @@ function getResolvedDate(dateStr) {
     const day = date.getDate();
     const wkDay = weekDays[date.getDay()];
     const hr = date.getHours();
-
-    let hour;
-    if (hr === 0) hour = '12';
-    else if (hr <= 10) hour = '0' + hr;
-    else if (hr <= 12) hour = hr + '';
-    else hour = (hr - 12) + '';
-
-    const meridean = hr > 11 ? 'PM' : 'AM';
+    const hour = formattedHour(hr);
+    const meridean = hr < 12 ? 'AM' : 'PM';
     const min = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
 
     return `${wkDay}, ${day}${dateSuffix(day)} ${month}, ${year} &nbsp;&nbsp;&nbsp;(${hour}:${min} ${meridean})`;
@@ -277,12 +271,24 @@ function getResolvedDate(dateStr) {
 
 
 //helper function to append the correct suffix to a date
-function dateSuffix(date) {
+function dateSuffix(day) {
     //set suffix according to date of the month
-    if (date % 10 == 1 && date != 11) return 'st';
-    else if (date % 10 == 2 && date != 12) return 'nd';
-    else if (date % 10 == 3 && date != 13) return 'rd';
+    if (day % 10 == 1 && day != 11) return 'st';
+    else if (day % 10 == 2 && day != 12) return 'nd';
+    else if (day % 10 == 3 && day != 13) return 'rd';
     else return 'th';
+}
+
+
+//helper function to generate properly formatted hour
+function formattedHour(hr) {
+    let hour;
+    if (hr === 0) hour = '12';              //e.g. 12 AM
+    else if (hr < 10) hour = '0' + hr;      //e.g. 09
+    else if (hr <= 12) hour = hr + '';      //e.g. 11
+    else hour = (hr - 12) + '';             //e.g. 1 PM
+
+    return hour;
 }
 
 
@@ -548,7 +554,9 @@ function unsubscribePushNotif() {
 
 //function to listen to message events from the service worker
 navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data.key === 'refresh') {
-        window.location.reload(true);
+    const article = event.data.article;
+    if (article) {
+        updateNews([article]);
+        basicMsg('Refresh page to update all information');
     }
 });

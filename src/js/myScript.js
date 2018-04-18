@@ -325,7 +325,7 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    const address = 'http://headlines-tobe.herokuapp.com';           
+    const address = 'https://headlines-tobe.herokuapp.com';           
     socket = io.connect(address);  //{ secure: true }
     if (!socket) return;
     else clearInterval(socketInterval);             //clear connection checking

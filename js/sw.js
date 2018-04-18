@@ -350,7 +350,7 @@ function cleanAllNewsDb(storeName, count) {
 
 
 //due to specification differences (as regards transactions, indexed db closing and promises), 
-//works in chrome but not compatible in firefox and most browsers
+//works in chrome but not compatible in firefox and most browsers.
 //function to clean general news store (not used)
 function cleanAllNewsDb_Old(storeName, count) {
     return dbPromise().then(db => {

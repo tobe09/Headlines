@@ -556,6 +556,9 @@ function unsubscribePushNotif() {
 navigator.serviceWorker.addEventListener('message', event => {
     const article = event.data.article;
     if (article) {
+        $("#countriesList").prop('selectedIndex', 0);
+        $("#sourcesList").prop('selectedIndex', 0);
+
         showAllNews().then(val => {
             setTimeout(() => {                  //display updated news after 2 seconds delay
                 updateNews([article]);

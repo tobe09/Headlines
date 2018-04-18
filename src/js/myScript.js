@@ -26,19 +26,19 @@ let lastNewsUrl, lastNewsCode, lastNewsTime;        //track most recent news for
 //function to get and display all news
 function showAllNews() {
     const url = 'news/allNews?socketId=' + getSocketId();
-    displayAjaxInfo(url, 'all');
+    return displayNewsInfo(url, 'all');
 }
 
 
 //function to show countries available
 function showCountries() {
-    dataApi('GET', 'news/countries').then(countries => {
-        if (countries.Error != null) {     
+    return dataApi('GET', 'news/countries').then(countries => {
+        if (countries.Error != null) {
             errorMsg(countries.Error);                       //display error from server
             $('#countriesList').html('<select><option>Not Loaded</option></select>');
             return;
         }
-        
+
         const optionList = getSelectOptions(countries);     //generate select list html
         $('#countriesList').html(optionList);
     })
@@ -48,7 +48,7 @@ function showCountries() {
 
 //function to show sources available
 function showSources() {
-    dataApi('GET', 'news/sources').then(sourceObject => {
+    return dataApi('GET', 'news/sources').then(sourceObject => {
         if (sourceObject.Error != null) {
             errorMsg(sourceObject.Error);
             errorMsg('Error Loading Sources', $('#asideSources'));
@@ -95,7 +95,7 @@ function handleCountryChange(countryCode, countryName) {
     displayFilterValues('COUNTRY -', countryName);
 
     const url = 'news/byCountry/' + countryCode + '?socketId=' + getSocketId();
-    displayAjaxInfo(url, countryCode);
+    displayNewsInfo(url, countryCode);
 }
 
 
@@ -114,13 +114,13 @@ function handleSourceChange(sourceCode, sourceName) {
     displayFilterValues('SOURCE -', sourceName)
 
     const url = 'news/bySource/' + sourceCode + '?socketId=' + getSocketId();
-    displayAjaxInfo(url, sourceCode);
+    displayNewsInfo(url, sourceCode);
 }
 
 
 //function to generate information from ajax call
-function displayAjaxInfo(url, code) {
-    dataApi('GET', url).then(allNews => {
+function displayNewsInfo(url, code) {
+    return dataApi('GET', url).then(allNews => {
         if (allNews.Error != null) {
             errorMsg(allNews.Error);
             return;
@@ -325,8 +325,8 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    const address = 'https://headlines-tobe.herokuapp.com';
-    socket = io.connect(address);
+    const address = 'http://headlines-tobe.herokuapp.com';           
+    socket = io.connect(address);  //{ secure: true }
     if (!socket) return;
     else clearInterval(socketInterval);             //clear connection checking
 
@@ -556,7 +556,11 @@ function unsubscribePushNotif() {
 navigator.serviceWorker.addEventListener('message', event => {
     const article = event.data.article;
     if (article) {
-        updateNews([article]);
-        basicMsg('Refresh page to update all information');
+        showAllNews().then(val => {
+            setTimeout(() => {                  //display updated news after 2 seconds delay
+                updateNews([article]);
+                successMsg('Latest news article loaded');
+            }, 2 * 1000);       
+        });
     }
 });

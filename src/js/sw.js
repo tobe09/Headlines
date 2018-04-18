@@ -460,7 +460,7 @@ self.addEventListener('notificationclick', event => {
         for (const myClient of myClients) {
             if (myClient.url === urlToOpen) {
                 return myClient.focus().then(currentClient => {
-                    return currentClient.postMessage({ article }                 	//send article to focused client
+                    return currentClient.postMessage({ article });                 	//send article to focused client
                 });
             }
         }

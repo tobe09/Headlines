@@ -460,13 +460,13 @@ self.addEventListener('notificationclick', event => {
         for (const myClient of myClients) {
             if (myClient.url === urlToOpen) {
                 return myClient.focus().then(currentClient => {
-                    return currentClient.postMessage({ article });              //send article to focused client
+                    return currentClient.postMessage({ article }                 	//send article to focused client
                 });
             }
         }
         
-        return clients.openWindow(urlToOpen).then(myClient => {
-            setTimeout(() => myClient.postMessage({ article }), 2 * 1000);      //send article after a 2 second delay
+        return clients.openWindow(urlToOpen).then(currentClient => {
+            setTimeout(() => currentClient.postMessage({ article }), 500);        //send article to client after half a second to avoid blocks during page load
         });
     });
 

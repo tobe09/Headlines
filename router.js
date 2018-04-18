@@ -19,9 +19,11 @@ mongoose.connect(hostAddress);
 var uniqueValidator = require('mongoose-unique-validator');
 const pushSubSchema = mongoose.Schema;
 const pushSubDoc = new pushSubSchema({
+    countryCode: { type: String, default: 'ng' },
     subscriptionString: { type: String, required: true, unique: true },
     dateAdded: { type: Date, default: Date.now }
-}).plugin(uniqueValidator);
+})
+.plugin(uniqueValidator);
 const PushSubModel = mongoose.model('push_subscriptions', pushSubDoc);
 
 
@@ -69,38 +71,53 @@ function getValidCountryCode(countryCode) {
 }
 
 
-//get all news
-router.get('/news/allNews', function (req, res) {
-    const ipArr = req.ip.split(':');
-    const clientIp = ipArr[ipArr.length - 1];
-    const socketId = req.query.socketId;
-
+//function to retrieve the location of a user
+function locateUserByIp(ipAddress) {
     const ipLocator = require("node-iplocate");
 
-    ipLocator(clientIp).then(payload => {
+    return ipLocator(ipAddress).then(payload => {
         const countryCode = payload.country_code.toLowerCase();
         const validCountryCode = getValidCountryCode(countryCode);
 
         return validCountryCode;
     })
         .catch(err => "ng")
-        .then(countryCode => {
-            const pageSize = 30;
-            const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode +
-                '&pageSize=' + pageSize + '&apiKey=' + newsApiKey;
+}
 
-            fetch(newsApiUrl).then(response => {
-                response.json().then(jsonData => {
-                    const articles = jsonData.articles;
-                    articles.sort(sortArticles);
 
-                    res.json(articles);                     //send response back to client
-                    notifyClientSocket(socketId, articles, 'all');    //notify client socket to check for news updates (offline first feature)
-                })
-            }).catch(err => {
-                res.json({ Error: "Network Error (All)" });
-            });
+//function to get ipaddress of client
+function getIpAddress(req) {
+    const ipArr = req.ip.split(':');
+    const clientIp = ipArr[ipArr.length - 1];
+
+    return clientIp;
+}
+
+
+//get all news
+router.get('/news/allNews', function (req, res) {
+    const clientIp = getIpAddress(req);
+    const socketId = req.query.socketId;
+
+    const ipLocator = require("node-iplocate");
+
+    locateUserByIp(clientIp).then(countryCode => {
+        const pageSize = 30;
+        const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode +
+            '&pageSize=' + pageSize + '&apiKey=' + newsApiKey;
+
+        fetch(newsApiUrl).then(response => {
+            response.json().then(jsonData => {
+                const articles = jsonData.articles;
+                articles.sort(sortArticles);
+
+                res.json(articles);                     //send response back to client
+                notifyClientSocket(socketId, articles, 'all');    //notify client socket to check for news updates (offline first feature)
+            })
+        }).catch(err => {
+            res.json({ Error: "Network Error (All)" });
         });
+    });
 });
 
 
@@ -209,54 +226,62 @@ function sortArticles(article1, article2) {
 
 //save push subscription identity sent by client
 router.post('/pushSubscriptions', function (req, res) {
+    const clientIp = getIpAddress(req);
     const pushSub = req.body;
 
-    const newSubscription = new PushSubModel({
-        subscriptionString: JSON.stringify(pushSub)
-    });
+    locateUserByIp(clientIp).then(countryCode => {
+        const newSubscription = new PushSubModel({
+            countryCode,
+            subscriptionString: JSON.stringify(pushSub)
+        }); 
 
-    newSubscription.save(function (err, sub) {
-        if (err) res.json({ Error: 'Error occurred while saving subscription' });
-        else res.json({ Error: '' });
-    })
+        newSubscription.save(function (err, sub) {
+            if (err) res.json({ Error: 'Error occurred while saving subscription' });
+            else res.json({ Error: '' });
+        })
+    });
 })
 
 
 //to send other files/data from the server
 router.get('*', function (req, res) {
-    var relativeAddress = req.url;                                          //get address of file from request object
+    const relativeAddress = req.url;                                          //get address of file from request object
     res.sendFile(relativeAddress, { root: rootLocation });
 });
 
 
-let lastNewsUrl;
+let lastNewsUrlObj = {};        //an object of country codes to hold last news urls for each country
+for (const countryArr of countries) {
+    const countryCode = countryArr[0]
+    lastNewsUrlObj[countryCode] = '';
+}
 
 //send news update as push subscriptions to subscribed clients
 const newsUpdateInterval = setInterval(() => {
-    const newsApiUrl = 'https://newsapi.org/v2/top-headlines?country=ng&sortBy=publishedAt&pageSize=1&apiKey=' + newsApiKey; //top-headlines
+    PushSubModel.find(function (err, subscriptions) {
+        if (err) return;
 
-    fetch(newsApiUrl).then(response => {
-        response.json().then(jsonData => {
-            const article = jsonData.articles[0];
+        for (const sub of subscriptions) {
+            const id = sub._id;
+            const countryCode = sub.countryCode;
+            const subscription = JSON.parse(sub.subscriptionString);
 
-            if (lastNewsUrl == null || lastNewsUrl === article.url) {
-                if (lastNewsUrl == null) lastNewsUrl = article.url;
-                return;
-            }
+            const newsApiUrl = 'https://newsapi.org/v2/top-headlines?country=' + countryCode + '&sortBy=publishedAt&pageSize=1&apiKey=' + newsApiKey;
 
-            lastNewsUrl = article.url;
+            fetch(newsApiUrl).then(response => {
+                response.json().then(jsonData => {
+                    const article = jsonData.articles[0];
+                    
+                    if (lastNewsUrlObj[countryCode] === '') lastNewsUrlObj[countryCode] = article.url;
+                    if (lastNewsUrlObj[countryCode] === article.url) return;
 
-            PushSubModel.find(function (err, subscriptions) {
-                if (err) return;
+                    lastNewsUrlObj[countryCode] = article.url;
 
-                for (const sub of subscriptions) {
-                    const id = sub._id;
-                    const subscription = JSON.parse(sub.subscriptionString);
                     sendPushMsg(id, subscription, article);
-                }
-            })
-        })
-    }).catch(err => { })
+                })
+            }).catch(err => { })
+        }
+    })
 
 }, 5 * 60 * 1000);
 

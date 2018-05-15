@@ -38,19 +38,16 @@ self.addEventListener('install', event => {
 
 //handles activate event of service worker
 self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(            
-                cacheNames
-                    .filter(cacheName => cacheName.startsWith('headlines') && !allCaches.includes(cacheName))
-                    .map(cacheToDelete => {
-						return caches.delete(cacheToDelete)
-							.then(val => clients.claim())
-							.catch(err => console.log('Service worker activation event promise error has occured'));
-					})
-            )
-        })
-    );
+     event.waitUntil(
+         caches.keys().then(cacheNames => {
+             return Promise.all([
+					...(cacheNames
+                     .filter(cacheName => cacheName.startsWith('headlines') && !allCaches.includes(cacheName))
+                     .map(cacheToDelete =>  caches.delete(cacheToDelete))),
+					 self.clients.claim()						//force reload via a service worker
+				 ])
+         })
+     );
 });
 
 

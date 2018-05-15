@@ -8,7 +8,7 @@ const allCaches = [staticCache, imgCache];
 
 //handles install event of service worker
 self.addEventListener('install', event => {
-    const urlToCache = [
+    const urlsToCache = [
         '/',
         '/node_modules/jquery/dist/jquery.min.js',
         '/node_modules/popper.js/dist/popper.min.js',
@@ -20,7 +20,7 @@ self.addEventListener('install', event => {
         '/node_modules/bootstrap/dist/css/bootstrap.min.css',
         '/src/css/myStyles.css'
     ];
-    const imgToCache = [
+    const imgsToCache = [
         '/src/assets/images/noImage.png',
         '/src/assets/images/blockedImage.jpg',
         '/src/assets/images/headlines.ico',
@@ -29,9 +29,9 @@ self.addEventListener('install', event => {
 
     event.waitUntil(
         caches.open(staticCache)
-            .then(cache => cache.addAll(urlToCache))
+            .then(cache => cache.addAll(urlsToCache))
             .then(() => caches.open(imgCache))
-            .then(cache => cache.addAll(imgToCache))
+            .then(cache => cache.addAll(imgsToCache))
     );
 })
 
@@ -43,7 +43,11 @@ self.addEventListener('activate', event => {
             return Promise.all(            
                 cacheNames
                     .filter(cacheName => cacheName.startsWith('headlines') && !allCaches.includes(cacheName))
-                    .map(cacheToDelete => caches.delete(cacheToDelete))
+                    .map(cacheToDelete => {
+						return caches.delete(cacheToDelete)
+							.then(val => clients.claim())
+							.catch(err => console.log('Service worker activation event promise error has occured'));
+					})
             )
         })
     );

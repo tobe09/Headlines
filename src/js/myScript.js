@@ -561,9 +561,9 @@ navigator.serviceWorker.addEventListener('message', event => {
 
         showAllNews().then(val => {
             setTimeout(() => {                  //display updated news after 2 seconds delay
-                updateNews([article]);
+                //updateNews([article]);
                 successMsg('Latest news article loaded');
-            }, 2 * 1000);       
+            }, 1 * 1000);       
         });
     }
 });

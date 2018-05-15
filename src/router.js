@@ -316,7 +316,7 @@ function addNewsHandler(id, handler) {
 //notify subscribing functions of news update
 function notifyClientSocket(id, newsArr, code) {
     if (id && id != 'none') {
-        newsSocketClients[id](newsArr, code);
+		if(newsSocketClients[id]) newsSocketClients[id](newsArr, code);
     }
 }
 

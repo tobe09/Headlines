@@ -467,7 +467,7 @@ self.addEventListener('notificationclick', event => {
         }
         
         return clients.openWindow(urlToOpen).then(currentClient => {
-            setTimeout(() => currentClient.postMessage({ article }), 500);        //send article to client after half a second to avoid blocks during page load
+            setTimeout(() => currentClient.postMessage({ article }), 500);        //send article to client after half a second to avoid blocks during page load.
         });
     })
         .then(val => saveNews('allNews', [article]));

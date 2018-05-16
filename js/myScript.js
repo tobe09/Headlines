@@ -559,11 +559,11 @@ navigator.serviceWorker.addEventListener('message', event => {
         $("#countriesList").prop('selectedIndex', 0);
         $("#sourcesList").prop('selectedIndex', 0);
 
-        showAllNews().then(val => {
-            setTimeout(() => {                  //display updated news after 2 seconds delay
+        setTimeout(() => {                  //display updated news after a second delay
+			showAllNews().then(val => {
                 //updateNews([article]);
                 successMsg('Latest news article loaded');
-            }, 1 * 1000);       
-        });
+			});
+        }, 1 * 1000);       
     }
 });

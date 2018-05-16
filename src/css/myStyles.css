@@ -346,7 +346,7 @@ aside {
 
 @media screen and (max-height:600px){
 	aside{
-		height: calc(100vh - 120px);    
+		height: calc(100vh - 140px);    
 		margin-top: -50px;
 		z-index: 1;
 	}

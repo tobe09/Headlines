@@ -99,8 +99,6 @@ router.get('/news/allNews', function (req, res) {
     const clientIp = getIpAddress(req);
     const socketId = req.query.socketId;
 
-    const ipLocator = require("node-iplocate");
-
     locateUserByIp(clientIp).then(countryCode => {
         const pageSize = 30;
         const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode +
@@ -112,7 +110,7 @@ router.get('/news/allNews', function (req, res) {
                 articles.sort(sortArticles);
 
                 res.json(articles);                     //send response back to client
-                notifyClientSocket(socketId, articles, 'all');    //notify client socket to check for news updates (offline first feature)
+                notifyClientSocket(socketId, articles, 'all');    //notify client of new articles through socket (offline first feature)
             })
         }).catch(err => {
             res.json({ Error: "Network Error (All)" });
@@ -256,7 +254,7 @@ for (const countryArr of countries) {
     lastNewsUrlObj[countryCode] = '';
 }
 
-//send news update as push subscriptions to subscribed clients
+//check for and send news update as push notofications to subscribed clients every five minutes
 const newsUpdateInterval = setInterval(() => {
     PushSubModel.find(function (err, subscriptions) {
         if (err) return;
@@ -298,7 +296,7 @@ function sendPushMsg(id, subscription, article) {
 
 //delete unnecessary subscriptions from the database
 function deleteSubFromDb(id) {
-    PushSubModel.findByIdAndRemove(id, (err, val) => { });
+    PushSubModel.findByIdAndRemove(id, (err, val) => console.log('deleted push subscription id: ' + id));
 }
 
 

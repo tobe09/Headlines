@@ -555,15 +555,9 @@ function unsubscribePushNotif() {
 //function to listen to message events from the service worker
 navigator.serviceWorker.addEventListener('message', event => {
     const article = event.data.article;
-    if (article) {
-        $("#countriesList").prop('selectedIndex', 0);
-        $("#sourcesList").prop('selectedIndex', 0);
-
-        setTimeout(() => {                  //display updated news after a second delay
-			showAllNews().then(val => {
-                //updateNews([article]);
-                successMsg('Latest news article loaded');
-			});
-        }, 1 * 1000);       
-    }
+    if (!article) return;
+	
+    $("#countriesList").prop('selectedIndex', 0);
+    $("#sourcesList").prop('selectedIndex', 0);
+    successMsg('Latest news article loaded');    
 });

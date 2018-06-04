@@ -171,7 +171,7 @@ router.get('/news/bySource/:sourceCode', function (req, res) {
             articles.sort(sortArticles);
 
             for (const article of articles) {
-                article.urlBySourceCode = article.url + sourceCode;
+                article.urlBySourceCode = article.url + sourceCode;				//add key to differentiate using source code
             }
 
             res.json(articles);        
@@ -195,7 +195,7 @@ router.get('/news/byCountry/:countryCode', function (req, res) {
             articles.sort(sortArticles);
 
             for (const article of articles) {
-                article.urlByCountryCode = article.url + countryCode;
+                article.urlByCountryCode = article.url + countryCode;			//add key to differentiate using country code
             }
 
             res.json(articles);        
@@ -270,7 +270,6 @@ const newsUpdateInterval = setInterval(() => {
                 response.json().then(jsonData => {
                     const article = jsonData.articles[0];
                     
-                    if (lastNewsUrlObj[countryCode] === '') lastNewsUrlObj[countryCode] = article.url;
                     if (lastNewsUrlObj[countryCode] === article.url) return;
 
                     lastNewsUrlObj[countryCode] = article.url;

@@ -291,8 +291,8 @@ function saveNews(storeName, news) {
         let tx = db.transaction(storeName, 'readwrite');
         let newsStore = tx.objectStore(storeName);
 
-//due to specification differences (as regards transactions, indexed db closing and promises), 
-//works in chrome but not compatible in firefox and most browsers
+//works in chrome but not compatible in firefox and most browsers,
+//due to specification differences (as regards transactions, indexed db closing and promises)
         //let promiseChain = Promise.resolve();
         //news.forEach(singleNews => {
         //    promiseChain = promiseChain.then(val => newsStore.put(singleNews));
@@ -457,20 +457,22 @@ self.addEventListener('notificationclick', event => {
     const urlToOpen = self.location.origin + '/'; 
     const article = event.notification.data;
 
-    const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
-        for (const myClient of myClients) {
-            if (myClient.url === urlToOpen) {
-                return myClient.focus().then(currentClient => {
-                    return currentClient.postMessage({ article });                 	//send article to focused client
-                });
-            }
-        }
-        
-        return clients.openWindow(urlToOpen).then(currentClient => {
-            setTimeout(() => currentClient.postMessage({ article }), 500);        //send article to client after half a second to avoid blocks during page load
-        });
-    })
-        .then(val => saveNews('allNews', [article]));
+    const promiseChain = saveNews('allNews', [article]).then(val => {
+		clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
+			for (const myClient of myClients) {
+				if (myClient.url === urlToOpen) {
+					return myClient.focus().then(currentClient => {
+						return currentClient.postMessage({ article, shouldLoadArticle : true });                 	//send article to focused client
+					});
+				}
+			}
+			
+			return clients.openWindow(urlToOpen).then(currentClient => {
+				//send message to client after half a second to avoid blocks during page load. Article is already loaded from indexedDb
+				setTimeout(() => currentClient.postMessage({ shouldLoadArticle : false }), 500);        
+			});
+		})		
+	})
 
     event.waitUntil(promiseChain);
 })

@@ -458,18 +458,19 @@ self.addEventListener('notificationclick', event => {
     const article = event.notification.data;
 
     const promiseChain = saveNews('allNews', [article]).then(val => {
-		clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
+		return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
 			for (const myClient of myClients) {
-				if (myClient.url === urlToOpen) {
-					return myClient.focus().then(currentClient => {
-						return currentClient.postMessage({ article, shouldLoadArticle : true });                 	//send article to focused client
-					});
+                if (myClient.url === urlToOpen) {
+                    return myClient.focus().then(currentClient => {
+                        return currentClient.postMessage({ article, shouldLoadArticle: true });                 	//send article to focused client
+                    })
 				}
 			}
-			
-			return clients.openWindow(urlToOpen).then(currentClient => {
+            
+            return clients.openWindow(urlToOpen).then(currentClient => {
 				//send message to client after half a second to avoid blocks during page load. Article is already loaded from indexedDb
-				setTimeout(() => currentClient.postMessage({ shouldLoadArticle : false }), 500);        
+                return new Promise(resolve => setTimeout(() => resolve('done waiting'), 500))
+                    .then(val => currentClient.postMessage({ shouldLoadArticle: false }));   
 			});
 		})		
 	})

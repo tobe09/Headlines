@@ -29,7 +29,7 @@ const removeNewsHandler = require('./src/router.js').removeNewsHandler;     //su
 //
 //const server = https.createServer(options, app);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;   
 
 const svr = app.listen(port, function () {
     console.log('Server now running on port: ' + svr.address().port);

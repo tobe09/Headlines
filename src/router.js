@@ -81,13 +81,14 @@ function locateUserByIp(ipAddress) {
 
         return validCountryCode;
     })
-        .catch(err => "ng")
+        .catch(err => { debugger; return "ng"; })
 }
 
 
 //function to get ipaddress of client
 function getIpAddress(req) {
-    const ipArr = req.ip.split(':');
+    const ip = req.ip
+    const ipArr = ip.split(':');
     const clientIp = ipArr[ipArr.length - 1];
 
     return clientIp;

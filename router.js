@@ -77,7 +77,7 @@ function locateUserByIp(ipAddress) {
 
     return ipLocator(ipAddress).then(payload => {
         console.log("Ip Address: " + ipAddress);
-        console.log("Country Code: ": payload.country_code);
+        console.log("Country Code: " + payload.country_code);
         const countryCode = payload.country_code.toLowerCase();
         const validCountryCode = getValidCountryCode(countryCode);
 

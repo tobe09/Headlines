@@ -72,10 +72,11 @@ function getValidCountryCode(countryCode) {
 
 
 //function to retrieve the location of a user
-function locateUserByIp(ipAddress) {
+function locateUserByIp(ipAddress, ip) {
     const ipLocator = require("node-iplocate");
 
     return ipLocator(ipAddress).then(payload => {
+        console.log("Full Ip: " + ip);
         console.log("Ip Address: " + ipAddress);
         console.log("Country Code: " + payload.country_code);
         const countryCode = payload.country_code.toLowerCase();
@@ -102,7 +103,7 @@ router.get('/news/allNews', function (req, res) {
     const clientIp = getIpAddress(req);
     const socketId = req.query.socketId;
 
-    locateUserByIp(clientIp).then(countryCode => {
+    locateUserByIp(clientIp, req.ip).then(countryCode => {
         const pageSize = 30;
         const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode +
             '&pageSize=' + pageSize + '&apiKey=' + newsApiKey;

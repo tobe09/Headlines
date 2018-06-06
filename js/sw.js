@@ -458,7 +458,8 @@ self.addEventListener('notificationclick', event => {
     const article = event.notification.data;
 
     const promiseChain = saveNews('allNews', [article]).then(val => {
-		return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
+        return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(myClients => {
+            //check for open client window
 			for (const myClient of myClients) {
                 if (myClient.url === urlToOpen) {
                     return myClient.focus().then(currentClient => {
@@ -466,7 +467,8 @@ self.addEventListener('notificationclick', event => {
                     })
 				}
 			}
-            
+
+            //open new window if none exists
             return clients.openWindow(urlToOpen).then(currentClient => {
 				//send message to client after half a second to avoid blocks during page load. Article is already loaded from indexedDb
                 return new Promise(resolve => setTimeout(() => resolve('done waiting'), 500))

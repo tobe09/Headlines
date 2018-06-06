@@ -76,12 +76,13 @@ function locateUserByIp(ipAddress) {
     const ipLocator = require("node-iplocate");
 
     return ipLocator(ipAddress).then(payload => {
+        console.log(payload.country_code);
         const countryCode = payload.country_code.toLowerCase();
         const validCountryCode = getValidCountryCode(countryCode);
 
         return validCountryCode;
     })
-        .catch(err => { debugger; return "ng"; })
+        .catch(err => "ng");
 }
 
 

@@ -72,13 +72,10 @@ function getValidCountryCode(countryCode) {
 
 
 //function to retrieve the location of a user
-function locateUserByIp(ipAddress, ip) {
-    const ipLocator = require("node-iplocate");
-
+function locateUserByIp(ipAddress) {
     return ipLocator(ipAddress).then(payload => {
-        console.log("Full Ip: " + ip);
-        console.log("Ip Address: " + ipAddress);
-        console.log("Country Code: " + payload.country_code);
+        console.log("Ip address: " + ipAddress);
+        console.log("Country code: " + payload.country_code);
         const countryCode = payload.country_code.toLowerCase();
         const validCountryCode = getValidCountryCode(countryCode);
 
@@ -90,7 +87,7 @@ function locateUserByIp(ipAddress, ip) {
 
 //function to get ipaddress of client
 function getIpAddress(req) {
-    const ip = req.ip
+    const ip = req.header('x-forwarded-for') || req.connection.remoteAddress || req.ip;
     const ipArr = ip.split(':');
     const clientIp = ipArr[ipArr.length - 1];
 
@@ -103,7 +100,7 @@ router.get('/news/allNews', function (req, res) {
     const clientIp = getIpAddress(req);
     const socketId = req.query.socketId;
 
-    locateUserByIp(clientIp, req.ip).then(countryCode => {
+    locateUserByIp(clientIp).then(countryCode => {
         const pageSize = 30;
         const newsApiUrl = 'https://newsapi.org/v2/top-headlines?sortBy=publishedAt&country=' + countryCode +
             '&pageSize=' + pageSize + '&apiKey=' + newsApiKey;

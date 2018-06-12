@@ -73,7 +73,7 @@ function getValidCountryCode(countryCode) {
 
 //function to retrieve the location of a user
 function locateUserByIp(ipAddress) {
-    const ipLocator = require('node-ipLocate');
+    const ipLocator = require('node-iplocate');
 
     return ipLocator(ipAddress).then(payload => {
         console.log("Ip address: " + ipAddress);

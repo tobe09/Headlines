@@ -139,7 +139,7 @@ function getAllNews(url) {
                 return getJsonResponse(articles);
             })
         }).catch(err => {
-            return getJsonResponse({ Error: "Fetch Error (All)" });
+            return getJsonResponse({ Error: "Retrieving updated news. (All)" });
         });
     }
 }

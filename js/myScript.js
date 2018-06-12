@@ -42,7 +42,7 @@ function showCountries() {
         const optionList = getSelectOptions(countries);     //generate select list html
         $('#countriesList').html(optionList);
     })
-        .catch(err => errorMsg('Network Error'));
+        .catch(err => errorMsg('Error retrieving countries from server.'));
 }
 
 
@@ -61,7 +61,7 @@ function showSources() {
 
         generateSourceList(sourceObject);
     })
-        .catch(err => errorMsg('Network Error'));
+        .catch(err => errorMsg('Error retrieving sources from server.'));
 }
 
 
@@ -129,7 +129,7 @@ function displayNewsInfo(url, code) {
         setLatestDetails(allNews[0], code);
         displayNews(allNews);
     })
-        .catch(err => errorMsg('Network Error'));
+        .catch(err => errorMsg('Error retrieving news from server. ('+ code + ')'));
 }
 
 

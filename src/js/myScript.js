@@ -26,7 +26,7 @@ let lastNewsUrl, lastNewsCode, lastNewsTime;        //track most recent news for
 //function to get and display all news
 function showAllNews() {
     const url = 'news/allNews?socketId=' + getSocketId();
-    return displayNewsInfo(url, 'all');
+    return displayNewsInfo(url, 'All');
 }
 
 
@@ -118,6 +118,14 @@ function handleSourceChange(sourceCode, sourceName) {
 }
 
 
+//function to get socket id
+function getSocketId() {
+    const socketId = socket ? socket.id : 'none';
+
+    return socketId || 'none';
+}
+
+
 //function to generate information from ajax call
 function displayNewsInfo(url, code) {
     return dataApi('GET', url).then(allNews => {
@@ -129,7 +137,7 @@ function displayNewsInfo(url, code) {
         setLatestDetails(allNews[0], code);
         displayNews(allNews);
     })
-        .catch(err => errorMsg('Error retrieving news from server. ('+ code + ')'));
+        .catch(err => errorMsg('Error retrieving news from server ('+ code + ').'));
 }
 
 
@@ -346,14 +354,6 @@ function socketConnect() {
             updateNews(newsArr);
         }
     })
-}
-
-
-//function to get socket id
-function getSocketId() {
-    const socketId = socket ? socket.id : 'none';
-
-    return socketId || 'none';
 }
 
 

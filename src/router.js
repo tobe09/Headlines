@@ -73,8 +73,6 @@ function getValidCountryCode(countryCode) {
 
 //function to retrieve the location of a user
 function locateUserByIp(ipAddress) {
-    const ipLocator = require("node-iplocate");
-	
     return ipLocator(ipAddress).then(payload => {
         console.log("Ip address: " + ipAddress);
         console.log("Country code: " + payload.country_code);
@@ -116,7 +114,7 @@ router.get('/news/allNews', function (req, res) {
                 notifyClientSocket(socketId, articles, 'all');    //notify client of new articles through socket (offline first feature)
             })
         }).catch(err => {
-            res.json({ Error: "Network Error (All)" });
+            res.json({ Error: "Unable to retrieve news (All)" });
         });
     });
 });
@@ -150,7 +148,7 @@ router.get('/news/sources', function (req, res) {
             res.json(sourceObject);
         })
     }).catch(err => {
-        res.json({ Error: "Network Error (Sources)" });
+        res.json({ Error: "Unable to retrieve sources (Sources)" });
     });
 });
 
@@ -181,7 +179,7 @@ router.get('/news/bySource/:sourceCode', function (req, res) {
             notifyClientSocket(socketId, articles, sourceCode);
         })
     }).catch(err => {
-        res.json({ Error: "Network Error (Source Code: " + sourceCode + ")" });
+        res.json({ Error: "Unable to retrieve news for source (Source Code: " + sourceCode + ")" });
     });
 });
 
@@ -205,7 +203,7 @@ router.get('/news/byCountry/:countryCode', function (req, res) {
             notifyClientSocket(socketId, articles, countryCode);
         })
     }).catch(err => {
-        res.json({ Error: "Network Error (Country Code: " + countryCode + ")" });
+        res.json({ Error: "Unable to retrieve news for country (Country Code: " + countryCode + ")" });
     });
 });
 

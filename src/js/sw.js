@@ -139,7 +139,7 @@ function getAllNews(url) {
                 return getJsonResponse(articles);
             })
         }).catch(err => {
-            return getJsonResponse({ Error: "Retrieving updated news. (All)" });
+            return getJsonResponse({ Error: "Network error retrieving updated news. (All)" });
         });
     }
 }
@@ -170,7 +170,7 @@ function getSources(url) {
                 return getJsonResponse(sourceObject);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Fetch Error (Sources)" });
+            return getJsonResponse({ Error: "Network error retrieving updated sources" });
         });
     }
 }
@@ -201,7 +201,7 @@ function getCountries(url) {
                 return getJsonResponse(countriesObject);
             })
         }).catch(err => {
-            return getJsonResponse({ Error: "Fetch Error (Countries)" });
+            return getJsonResponse({ Error: "Network error retrieving updated countries" });
         });
     }
 }
@@ -239,7 +239,7 @@ function getByCountry(url) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Fetch Error (Country Code: " + countryCode + ")" });
+            return getJsonResponse({ Error: "Error retrieving updated news. (Country Code: " + countryCode + ")" });
         });
     }
 }
@@ -277,7 +277,7 @@ function getBySource(url) {
                 return getJsonResponse(articles);
             })
         }).catch(error => {
-            return getJsonResponse({ Error: "Fetch Error (Source Code: " + sourceCode + ")"  });
+            return getJsonResponse({ Error: "Error retrieving updated news. (Source Code: " + sourceCode + ")"  });
         });
     }
 }

@@ -470,8 +470,8 @@ self.addEventListener('notificationclick', event => {
 
             //open new window if none exists
             return clients.openWindow(urlToOpen).then(currentClient => {
-				//send message to client after a second to avoid blocks during page load. Article is already retrieved from indexedDb when window loads
-                return new Promise(resolve => setTimeout(() => resolve('done waiting'), 1000))
+				//send message to client after half a second to avoid blocks during page load. Article is already retrieved from indexedDb when window loads
+                return new Promise(resolve => setTimeout(() => resolve('done waiting'), 500))
                     .then(val => currentClient.postMessage({ shouldLoadArticle: false }));   
 			});
 		})		

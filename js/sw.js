@@ -81,7 +81,7 @@ self.addEventListener('fetch', (event) => {
             const urlArr = event.request.url.split('/');
             const imgHost = urlArr[0] + '//' + urlArr[2];       //attempt to generate referer for blocked/protected images
 
-            return fetch(event.request, { method: 'GET', headers: { Referer: imgHost } })
+            return fetch(event.request, {referrer: imgHost, referrerPolicy: "no-referrer", mode: "no-cors"});
         }
 
         return response;

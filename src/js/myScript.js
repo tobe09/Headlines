@@ -32,7 +32,7 @@ function showAllNews() {
 
 //function to show countries available
 function showCountries() {
-    return dataApi('GET', 'news/countries').then(countries => {
+    return networkApi('GET', 'news/countries').then(countries => {
         if (countries.Error != null) {
             errorMsg(countries.Error);                       //display error from server
             $('#countriesList').html('<select><option>Not Loaded</option></select>');
@@ -48,7 +48,7 @@ function showCountries() {
 
 //function to show sources available
 function showSources() {
-    return dataApi('GET', 'news/sources').then(sourceObject => {
+    return networkApi('GET', 'news/sources').then(sourceObject => {
         if (sourceObject.Error != null) {
             errorMsg(sourceObject.Error);
             errorMsg('Error Loading Sources', $('#asideSources'));
@@ -128,7 +128,7 @@ function getSocketId() {
 
 //function to generate information from ajax call
 function displayNewsInfo(url, code) {
-    return dataApi('GET', url).then(allNews => {
+    return networkApi('GET', url).then(allNews => {
         if (allNews.Error != null) {
             errorMsg(allNews.Error);
             return;
@@ -311,7 +311,7 @@ function getSelectOptions(options) {
 
 
 //function to make ajax calls and return a promise which resolve to the needed information
-function dataApi(type, url, data, async = true) {
+function networkApi(type, url, data, async = true) {
     return new Promise((resolve, reject) => {
         $.ajax({
             type,
@@ -532,7 +532,7 @@ function urlBase64ToUint8Array(base64String) {
 
 //function to send user subscription to the server for persistence
 function sendSubscriptionToServer(pushSubscription) {
-    return dataApi('POST', 'pushSubscriptions', pushSubscription);
+    return networkApi('POST', 'pushSubscriptions', pushSubscription);
 }
 
 
@@ -541,7 +541,7 @@ function getPushSubscription() {
     if (!navigator.serviceWorker) return;
 
     return navigator.serviceWorker.ready.then(reg => {
-        return reg.pushManager.getSubscription()
+        return reg.pushManager.getSubscription();
     });
 }
 

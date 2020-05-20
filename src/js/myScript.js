@@ -19,6 +19,7 @@
     });
 })
 
+const baseApiKey = '';
 
 let lastNewsUrl, lastNewsCode, lastNewsTime;        //track most recent news for live updating from server
 
@@ -31,37 +32,40 @@ function showAllNews() {
 
 
 //function to show countries available
-function showCountries() {
-    return networkApi('GET', 'news/countries').then(countries => {
+async function showCountries() {
+    try {
+        const countries = await networkApi('GET', baseApiKey + 'news/countries');
         if (countries.Error != null) {
-            errorMsg(countries.Error);                       //display error from server
+            errorMsg(countries.Error); //display error from server
             $('#countriesList').html('<select><option>Not Loaded</option></select>');
             return;
         }
-
-        const optionList = getSelectOptions(countries);     //generate select list html
+        const optionList = getSelectOptions(countries); //generate select list html
         $('#countriesList').html(optionList);
-    })
-        .catch(err => errorMsg('Error retrieving countries from server.'));
+    }
+    catch (err) {
+        return errorMsg('Error retrieving countries from server.');
+    }
 }
 
 
 //function to show sources available
-function showSources() {
-    return networkApi('GET', 'news/sources').then(sourceObject => {
+async function showSources() {
+    try {
+        const sourceObject = await networkApi('GET', baseApiKey + 'news/sources');
         if (sourceObject.Error != null) {
             errorMsg(sourceObject.Error);
             errorMsg('Error Loading Sources', $('#asideSources'));
             $('#sourcesList').html('<select><option>Not Loaded</option></select>');
             return;
         }
-
         const htmlString = getSourceHtml(sourceObject);
         $('#asideSources').html(htmlString);
-
         generateSourceList(sourceObject);
-    })
-        .catch(err => errorMsg('Error retrieving sources from server.'));
+    }
+    catch (err) {
+        return errorMsg('Error retrieving sources from server.');
+    }
 }
 
 
@@ -127,17 +131,19 @@ function getSocketId() {
 
 
 //function to generate information from ajax call
-function displayNewsInfo(url, code) {
-    return networkApi('GET', url).then(allNews => {
+async function displayNewsInfo(url, code) {
+    try {
+        const allNews = await networkApi('GET', baseApiKey + url);
         if (allNews.Error != null) {
             errorMsg(allNews.Error);
             return;
         }
-
         setLatestDetails(allNews[0], code);
         displayNews(allNews);
-    })
-        .catch(err => errorMsg('Error retrieving news from server ('+ code + ').'));
+    }
+    catch (err) {
+        return errorMsg('Error retrieving news from server (' + code + ').');
+    }
 }
 
 
@@ -532,7 +538,7 @@ function urlBase64ToUint8Array(base64String) {
 
 //function to send user subscription to the server for persistence
 function sendSubscriptionToServer(pushSubscription) {
-    return networkApi('POST', 'pushSubscriptions', pushSubscription);
+    return networkApi('POST', baseApiKey + 'pushSubscriptions', pushSubscription);
 }
 
 

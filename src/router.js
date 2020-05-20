@@ -1,44 +1,43 @@
 ﻿//import express server
-const express = require("express");
-const router = express.Router();
-const fetch = require("node-fetch");
+import { Router } from "express";
+import { IpLocator } from "node-iplocate";
+const router = Router();
+import fetch from "node-fetch";
 
 
-const webPush = require('web-push');
+import { setVapidDetails, sendNotification } from 'web-push';
 //const vapidKeys = webPush.generateVAPIDKeys();
 const publicKey = 'BJbGel5u8l_RfmWqO1yW-Hshdo4HfLCS8FlNMx0rBVIEBOR2a3h_NDbw4EGvJfv_vKdAhFrq5NdG1Q3JLT5Ux4o'; //vapidKeys.publicKey; 
 const privateKey = 'U0WDz_q16h5ZMxrqI-zt3j0sTPqi0oLaBA17cudMMZw'; //vapidKeys.privateKey;
-webPush.setVapidDetails('mailto:chineketobenna@gmail.com', publicKey, privateKey);
+setVapidDetails('mailto:chineketobenna@gmail.com', publicKey, privateKey);
 
 
-const mongoose = require('mongoose');
-//const localAddress = 'mongodb://localhost:27017/headlinesdb';                                  //local development address
+import { connect, Schema, model, connection } from 'mongoose';
+const isLocalDevelopment = false;
+const localAddress = 'mongodb://localhost:27017/headlinesdb';                                  //local development address
 const hostAddress = 'mongodb://tobe09:nkeody09@ds141889.mlab.com:41889/headlinesdb';             //mLab repository address
-mongoose.connect(hostAddress);
+const address = isLocalDevelopment ? localAddress : hostAddress;
+connect(address);
 
-var uniqueValidator = require('mongoose-unique-validator');
-const pushSubSchema = mongoose.Schema;
+import uniqueValidator from 'mongoose-unique-validator';
+const pushSubSchema = Schema;
 const pushSubDoc = new pushSubSchema({
     countryCode: { type: String, default: 'ng' },
     subscriptionString: { type: String, required: true, unique: true },
     dateAdded: { type: Date, default: Date.now }
 })
 .plugin(uniqueValidator);
-const PushSubModel = mongoose.model('push_subscriptions', pushSubDoc);
+const PushSubModel = model('push_subscriptions', pushSubDoc);
 
 
-const dbConn = mongoose.connection;
-dbConn.on('error', console.error.bind(console, 'connection error:'));
-dbConn.once('open', () => console.log('Connected to mongo db server'));
-
-
-
-const newsApiKey = '11bae20ea48e474890528e504ea733e2';
+const dbConn = connection;
+dbConn.on('error', console.error.bind(console, 'MongoDb server connection error:'));
+dbConn.once('open', () => console.log('Connected to MongoDb server'));
 
 
 //to locate application files (relative to application root)
-const path = require('path');
-const rootLocation = path.join(__dirname, '../');
+import { join } from 'path';
+const rootLocation = join(__dirname, '../');
 
 
 //get web page
@@ -53,6 +52,8 @@ router.get('/sw.js', function (req, res) {
 })
 
 
+const newsApiKey = '11bae20ea48e474890528e504ea733e2';
+
 const countries = [['ar', 'Argentina'], ['au', 'Australia'], ['at', 'Austria'], ['be', 'Belgium'], ['br', 'Brazil'], ['bg', 'Bulgaria'],
     ['ca', 'Canada'], ['cn', 'China'], ['co', 'Columbia'], ['cu', 'Cuba'], ['cz', 'Czech Republic'], ['eg', 'Egypt'], ['fr', 'France'],
     ['de', 'Germany'], ['gr', 'Greece'], ['hk', 'Hong Kong'], ['hu', 'Hungary'], ['in', 'India'], ['id', 'Indonesia'], ['ie', 'Ireland'],
@@ -62,6 +63,22 @@ const countries = [['ar', 'Argentina'], ['au', 'Australia'], ['at', 'Austria'], 
     ['kr', 'South Korea'], ['se', 'Sweden'], ['ch', 'Switzerland'], ['tw', 'Taiwan'], ['th', 'Thailand'], ['tr', 'Turkey'], ['ae', 'United Arab Emirates'],
     ['ua', 'Ukraine'], ['gb', 'United Kingdom'], ['us', 'United States'], ['ve', 'Venezuela']];
 
+
+//function to retrieve the location of a user
+async function locateUserByIp(ipAddress) {
+    try {
+        const payload = await IpLocator(ipAddress);
+        console.log("Ip address: " + ipAddress);
+        console.log("Country code: " + payload.country_code);
+        const countryCode = payload.country_code.toLowerCase();
+        const validCountryCode = getValidCountryCode(countryCode);
+        return validCountryCode;
+    }
+    catch (err) {
+        return "ng";
+    }
+}
+
 function getValidCountryCode(countryCode) {
     for (const countryArr in countries) {
         if (countryCode === countryArr[0]) return countryCode;
@@ -69,23 +86,6 @@ function getValidCountryCode(countryCode) {
 
     return 'ng';
 }
-
-
-//function to retrieve the location of a user
-function locateUserByIp(ipAddress) {
-    const ipLocator = require('node-iplocate');
-
-    return ipLocator(ipAddress).then(payload => {
-        console.log("Ip address: " + ipAddress);
-        console.log("Country code: " + payload.country_code);
-        const countryCode = payload.country_code.toLowerCase();
-        const validCountryCode = getValidCountryCode(countryCode);
-
-        return validCountryCode;
-    })
-        .catch(err => "ng");
-}
-
 
 //function to get ipaddress of client
 function getIpAddress(req) {
@@ -258,7 +258,8 @@ for (const countryArr of countries) {
 }
 
 //check for and send news update as push notofications to subscribed clients every five minutes
-const newsUpdateInterval = setInterval(() => {
+const newsUpdateInterval = 5 * 60 * 1000;
+setInterval(() => {
     PushSubModel.find(function (err, subscriptions) {
         if (err) return;
 
@@ -283,12 +284,12 @@ const newsUpdateInterval = setInterval(() => {
         }
     })
 
-}, 5 * 60 * 1000);
+}, newsUpdateInterval);
 
 
 //send a push message to subscribers
 function sendPushMsg(id, subscription, article) {
-    webPush.sendNotification(subscription, JSON.stringify(article)).catch(err => {
+    sendNotification(subscription, JSON.stringify(article)).catch(err => {
         if (err || err.statusCode === 404 || err.statusCode === 410) {
             deleteSubFromDb(id);
         }
@@ -298,7 +299,7 @@ function sendPushMsg(id, subscription, article) {
 
 //delete unnecessary subscriptions from the database
 function deleteSubFromDb(id) {
-    PushSubModel.findByIdAndRemove(id, (err, val) => console.log('Deleted push subscription id: ' + id));
+    PushSubModel.findByIdAndRemove(id, () => console.log('Deleted push subscription id: ' + id));
 }
 
 
@@ -315,8 +316,8 @@ function addNewsHandler(id, handler) {
 
 //notify subscribing functions of news update
 function notifyClientSocket(id, newsArr, code) {
-    if (id && id != 'none') {
-		if(newsSocketClients[id]) newsSocketClients[id](newsArr, code);
+    if (id && id != 'none' && newsSocketClients[id]) {
+        newsSocketClients[id](newsArr, code);
     }
 }
 
@@ -328,7 +329,7 @@ function removeNewsHandler(id) {
 
 
 
-module.exports = {
+export default {
     router,
     addNewsHandler,
     removeNewsHandler

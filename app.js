@@ -1,33 +1,18 @@
-﻿const express = require('express');
+﻿import express from 'express';
 const app = express();
-const socketIo = require("socket.io");
+import { listen } from "socket.io";
 
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+import { urlencoded, json } from "body-parser";
+app.use(urlencoded({ extended: true }));
+app.use(json());
 
 
-const router = require('./src/router.js').router;
+import { router } from './src/router.js';
 app.use('/', router);
 
 
-const addNewsHandler = require('./src/router.js').addNewsHandler;     //subscribe a method to be notified by socket of new articles
-const removeNewsHandler = require('./src/router.js').removeNewsHandler;     //subscribe a method to be notified by socket of new articles
-
-
-//const https = require('https');
-//const path = require('path');
-//const fs = require('fs');
-
-//var rootLocation = path.join(__dirname, '../');
-//const options = {
-//    key: fs.readFileSync(rootLocation + '/src/assets/headlineServer.key'),
-//    cert: fs.readFileSync(rootLocation + '/src/assets/headlineServer.crt'),
-//    passphrase: '1234'
-//};
-//
-//const server = https.createServer(options, app);
+import { addNewsHandler, removeNewsHandler } from './src/router.js';    
 
 const port = process.env.PORT || 3000;   
 
@@ -36,7 +21,7 @@ const svr = app.listen(port, function () {
 });
 
 
-const io = socketIo.listen(svr);
+const io = listen(svr);
 const serverSocket = io.sockets;
 let connections = 0;
 

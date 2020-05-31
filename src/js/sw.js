@@ -4,7 +4,7 @@ const staticCache = 'headlines-static-3';
 const imgCache = 'headlines-content-imgs';
 const allCaches = [staticCache, imgCache];
 
-//handles install event of service worker
+//handles install event of service worker 
 self.addEventListener('install', event => {
     const urlsToCache = [
         '/',

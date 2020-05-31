@@ -347,9 +347,7 @@ function socketConnect() {
 
         for (let i = 0; i < newsArr.length; i++) {
             if (lastNewsUrl === newsArr[i].url) {                       //get last url to begin update
-                if (i === 0) 
-                    return;
-                    
+                if (i === 0) return;
                 const updNewsArr = newsArr.slice(0, i);
                 updateNews(updNewsArr);
                 return;

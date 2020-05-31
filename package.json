@@ -2,7 +2,7 @@
   "name": "headlines",
   "version": "0.0.0",
   "description": "Headlines",
-  "main": "server.js",
+  "main": "app.js",
   "author": {
     "name": "Chineke Tobenna"
   },
@@ -14,10 +14,10 @@
     "http": "0.0.0",
     "idb": "^2.1.1",
     "jquery": "^3.3.1",
-    "mongoose": "^5.0.13",
+    "mongoose": "^5.9.15",
     "mongoose-unique-validator": "^2.0.0",
     "node-fetch": "^2.1.1",
-    "node-iplocate": "^1.0.1",
+    "node-iplocate": "^1.0.2",
     "path": "^0.12.7",
     "popper.js": "^1.14.1",
     "socket.io": "^2.1.0",

@@ -1,0 +1,26 @@
+{
+  "name": "headlines",
+  "version": "0.0.0",
+  "description": "Headlines",
+  "main": "app.js",
+  "author": {
+    "name": "Chineke Tobenna"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "bootstrap": "^4.0.0",
+    "express": "^4.16.3",
+    "express-force-ssl": "^0.3.2",
+    "http": "0.0.0",
+    "idb": "^2.1.1",
+    "jquery": "^3.3.1",
+    "mongoose": "^5.0.13",
+    "mongoose-unique-validator": "^2.0.0",
+    "node-fetch": "^2.1.1",
+    "node-iplocate": "^1.0.2",
+    "path": "^0.12.7",
+    "popper.js": "^1.14.1",
+    "socket.io": "^2.1.0",
+    "web-push": "^3.3.0"
+  }
+}

@@ -12,8 +12,8 @@
     <link href="css/myStyles.css" rel="stylesheet" />
 </head>
 
-<body>
-    <div class="container heading">
+<body class="container">
+    <div class="heading">
         <div class="row">
             <div class="col">
                 <header class="text-center">
@@ -21,8 +21,7 @@
                     <h3><small class="header-info">News Headlines From Around the World</small></h3>
                 </header>
 
-                <div id="filters" class="container">
-                    <div class="row">
+                    <div id="filters" class="row">
                         <div class="col-sm-9 col-lg-5">
                             <div class="row">
                                 <div class="col filterHeader">
@@ -58,19 +57,18 @@
                                 <button id="btnNo" class="float-right update-btn btn-danger">No</button>
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
 
-    <div class="container content">
+    <div class="content container-fluid">
         <div class="row">
             <div class="col-sm-12 col-md-9">
                 <div id="divMsg"></div>
                 <content>
-                    <div id="newsContent" class="container">
+                    <div id="newsContent">
 
                         <!--<div class="row justify-content-center single-news">
                             <div class="col-sm-12 col-md-4">
@@ -112,24 +110,22 @@
 
             <div class="col-sm-12 col-md-3">
                 <aside>
-                    <div class="container">
-                        <div class="row">
-                            <div class="col">
-                                <div class="aside-header"><h4 onclick="handleSourceChange('All')">ALL SOURCES</h4></div>
-                                <div id="asideSources">
-                                    <h5>Loading...</h5>
-                                    <!--<p>Business</p>
-                                    <ul>
-                                        <li><a href="#" onclick="">General 1</a></li>
-                                        <li><a href="#">General 2</a></li>
-                                        <li><a href="#">General 8</a></li>
-                                    </ul>
-                                    <p>General</p>
-                                    <ul>
-                                        <li><a href="#">General 1</a></li>
-                                        <li><a href="#">General 8</a></li>
-                                    </ul>-->
-                                </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="aside-header"><h4 onclick="handleSourceChange('All')">ALL SOURCES</h4></div>
+                            <div id="asideSources">
+                                <h5>Loading...</h5>
+                                <!--<p>Business</p>
+                                <ul>
+                                    <li><a href="#" onclick="">General 1</a></li>
+                                    <li><a href="#">General 2</a></li>
+                                    <li><a href="#">General 8</a></li>
+                                </ul>
+                                <p>General</p>
+                                <ul>
+                                    <li><a href="#">General 1</a></li>
+                                    <li><a href="#">General 8</a></li>
+                                </ul>-->
                             </div>
                         </div>
                     </div>

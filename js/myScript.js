@@ -337,7 +337,7 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    if(!io) return;
+    if(!window['io']) return;
 
     const address = baseApiKey.substr(0, baseApiKey.length - 1);          
     socket = io.connect(address);  //{ secure: true }

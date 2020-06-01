@@ -337,7 +337,7 @@ socketConnect();
 
 //function to create a socket connection when one exists
 function socketConnect() {
-    const address = 'https://headlines-tobe.herokuapp.com';           
+    const address = 'https://headlines-tobe.herokuapp.com';          
     socket = io.connect(address);  //{ secure: true }
     const socketInterval = setInterval(socketConnect, 20 * 1000);       //check for connection availability every 20 seconds
     if (!socket) return;

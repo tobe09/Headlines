@@ -19,7 +19,7 @@
     });
 })
 
-const baseApiKey = '/';
+const baseApiKey = 'https://headlines-tobe.herokuapp.com/';
 
 let lastNewsUrl, lastNewsCode, lastNewsTime;        //track most recent news for live updating from server
 

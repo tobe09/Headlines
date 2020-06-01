@@ -7,21 +7,21 @@ const allCaches = [staticCache, imgCache];
 //handles install event of service worker  
 self.addEventListener('install', event => {
     const urlsToCache = [
-        '/Headlines',
-        '/Headlinesjs/jquery-3.2.1.slim.min.js',
-        '/Headlinesjs/popper.min.js',
-        '/Headlinesjs/bootstrap.min.js',
-        '/Headlinesjs/idb.js',
-        '/Headlinesjs/myScript.js',
-        '/Headlinesjs/mySwTasks.js',
-        '/Headlinescss/bootstrap.min.css', 
-        '/Headlinescss/myStyles.css'
+        '/Headlines/',
+        '/Headlines/js/jquery-3.2.1.slim.min.js',
+        '/Headlines/js/popper.min.js',
+        '/Headlines/js/bootstrap.min.js',
+        '/Headlines/js/idb.js',
+        '/Headlines/js/myScript.js',
+        '/Headlines/js/mySwTasks.js',
+        '/Headlines/css/bootstrap.min.css', 
+        '/Headlines/css/myStyles.css'
     ];
     const imgsToCache = [
-        '/Headlinesassets/images/noImage.png',
-        '/Headlinesassets/images/blockedImage.jpg',
-        '/Headlinesassets/images/headlines.ico',
-        '/Headlinesassets/images/headlinesRed.jpg'
+        '/Headlines/assets/images/noImage.png',
+        '/Headlines/assets/images/blockedImage.jpg',
+        '/Headlines/assets/images/headlines.ico',
+        '/Headlines/assets/images/headlinesRed.jpg'
     ];
 
     event.waitUntil(

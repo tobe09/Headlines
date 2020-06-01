@@ -252,7 +252,7 @@ function getAllHtmlContent(allNews) {
 //helper function to generate html string for each news article
 function getRowHtmlContent(singleNews) {
     const htmlString = '<div class="row justify-content-center single-news"> <div class="col-sm-12 col-md-4"> <div class="imgDiv mx-3"><img src="' + (singleNews.urlToImage ||
-        '/src/assets/images/noImage.png') + '" alt="image"/></div></div><div class="col-sm-12 col-md-8 info-headers"><div class="container"><div class="row"><div ' +
+        'assets/images/noImage.png') + '" alt="image"/></div></div><div class="col-sm-12 col-md-8 info-headers"><div class="container"><div class="row"><div ' +
         'class="col-sm-12 col-md-4"><strong>Source: </strong> </div><div class="col-sm-12 col-md-8">' + singleNews.source.name + '</div>' +
         '<div class="col-sm-12 col-md-4"> <strong>Author: </strong></div><div class="col-sm-12 col-md-8">' + (singleNews.author || 'Anonymous') + '</div>' +
         '<div class="col-sm-12 col-md-4"> <strong>Date Published: </strong></div><div class="col-sm-12 col-md-8">' + getResolvedDate(singleNews.publishedAt) +

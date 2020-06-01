@@ -1,4 +1,4 @@
-﻿self.importScripts('/js/idb.js');                //import indexed db promise file
+﻿self.importScripts('js/idb.js');                //import indexed db promise file
 
 const staticCache = 'headlines-static-3'; 
 const imgCache = 'headlines-content-imgs';

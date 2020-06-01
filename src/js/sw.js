@@ -1,4 +1,4 @@
-﻿self.importScripts('/node_modules/idb/lib/idb.js');              //import indexed db promise file
+﻿self.importScripts('/node_modules/idb/lib/idb.js');                //import indexed db promise file
 
 const staticCache = 'headlines-static-3'; 
 const imgCache = 'headlines-content-imgs';
@@ -51,8 +51,10 @@ self.addEventListener('activate', event => {
 
 //handles fetch event of service worker
 self.addEventListener('fetch', (event) => {
-    let requestUrl = new URL(event.request.url);
-    if (requestUrl.origin === location.origin) {
+    let requestUrl = new URL(event.request.url);    
+    const herokuApi = 'https://headlines-tobe.herokuapp.com';
+    
+    if (requestUrl.origin === origin || requestUrl.origin === herokuApi) {
         if (requestUrl.pathname.startsWith('/news/')) {
             let response;
             if (requestUrl.pathname.startsWith('/news/allNews')) response = getAllNews(event.request.url);
@@ -129,11 +131,12 @@ function getAllNews(url) {
         try {
             const response = await fetch(url);
             const articles = await response.json();
-            if (articles.Error)
-                return getJsonResponse(articles);
-            saveNews('allNews', articles).then(() => {
-                cleanAllNewsDb('allNews', 30);
-            });
+            if (!articles.Error){
+                saveNews('allNews', articles).then(() => {
+                    cleanAllNewsDb('allNews', 30);
+                });
+            }
+
             return getJsonResponse(articles);
         }
         catch (err) {

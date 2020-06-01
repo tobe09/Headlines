@@ -7,22 +7,21 @@ const allCaches = [staticCache, imgCache];
 //handles install event of service worker
 self.addEventListener('install', event => {
     const urlsToCache = [
-        '/',
-        '/src/js/jquery-3.2.1.slim.min.js',
-        '/src/js/popper.min.js',
-        '/src/js/bootstrap.min.js',
-        '/node_modules/idb/lib/idb.js',
-        '/src/js/myScript.js',
-        '/src/js/mySwTasks.js',
-        '/socket.io/socket.io.js',
-        '/src/css/bootstrap.min.css', 
-        '/src/css/myStyles.css'
+        '',
+        'js/jquery-3.2.1.slim.min.js',
+        'js/popper.min.js',
+        'js/bootstrap.min.js',
+        'js/idb.js',
+        'js/myScript.js',
+        'js/mySwTasks.js',
+        'css/bootstrap.min.css', 
+        'css/myStyles.css'
     ];
     const imgsToCache = [
-        '/src/assets/images/noImage.png',
-        '/src/assets/images/blockedImage.jpg',
-        '/src/assets/images/headlines.ico',
-        '/src/assets/images/headlinesRed.jpg'
+        'assets/images/noImage.png',
+        'assets/images/blockedImage.jpg',
+        'assets/images/headlines.ico',
+        'assets/images/headlinesRed.jpg'
     ];
 
     event.waitUntil(
@@ -432,13 +431,13 @@ self.addEventListener('push', event => {
         const article = event.data.json();
         const options = {
             body: article.title,
-            icon: '/src/assets/images/headlines.ico',
-            image: article.urlToImage || '/src/assets/images/noImage.png',
+            icon: 'assets/images/headlines.ico',
+            image: article.urlToImage || '/assets/images/noImage.png',
             vibrate: [500, 100, 300, 100, 200],
             tag: 'newsNotiification',
             data: article,
-            actions: [{ action: 'open', title: 'OPEN', icon: '/src/assets/images/headlines.ico' },
-                { action: 'dismiss', title: 'DISMISS', icon: '/src/assets/images/headlinesRed.jpg' }]
+            actions: [{ action: 'open', title: 'OPEN', icon: 'assets/images/headlines.ico' },
+                { action: 'dismiss', title: 'DISMISS', icon: 'assets/images/headlinesRed.jpg' }]
         }
 
         return self.registration.showNotification(title, options);

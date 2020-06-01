@@ -1,30 +1,9 @@
 ﻿class MyServiceWorker {
 
-    _updateReady(worker) {
-        $('.update-sw').css('display', 'block');
-        $('#btnYes').on('click', function () {
-            $('.update-sw').css('display', 'none');
-            worker.postMessage({ 'key': 'skipWaiting' });
-        })
-        $('#btnNo').on('click', function () {
-            $('.update-sw').css('display', 'none');
-        })
-    }
-
-
-    _trackInstalling(worker) {
-        worker.addEventListener('statechange', () => {
-            if (worker.state === 'installed') {
-                this._updateReady(worker);
-            }
-        });
-    }
-
-
     regServiceWorker() {
         if (!navigator.serviceWorker) return
 
-        navigator.serviceWorker.register('/sw.js').then(reg => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
             if (!navigator.serviceWorker.controller) return     //not loaded via a new service worker
 
             if (reg.waiting) {
@@ -48,6 +27,25 @@
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             window.location.reload(true);
+        });
+    }
+    
+    _updateReady(worker) {
+        $('.update-sw').css('display', 'block');
+        $('#btnYes').on('click', function () {
+            $('.update-sw').css('display', 'none');
+            worker.postMessage({ 'key': 'skipWaiting' });
+        })
+        $('#btnNo').on('click', function () {
+            $('.update-sw').css('display', 'none');
+        })
+    }
+
+    _trackInstalling(worker) {
+        worker.addEventListener('statechange', () => {
+            if (worker.state === 'installed') {
+                this._updateReady(worker);
+            }
         });
     }
 }

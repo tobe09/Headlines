@@ -1,23 +1,21 @@
-﻿self.importScripts('/node_modules/idb/lib/idb.js');            //import indexed db promise file
+﻿self.importScripts('/node_modules/idb/lib/idb.js');                //import indexed db promise file
 
-
-const staticCache = 'headlines-static-3';
+const staticCache = 'headlines-static-3'; 
 const imgCache = 'headlines-content-imgs';
 const allCaches = [staticCache, imgCache];
-
 
 //handles install event of service worker
 self.addEventListener('install', event => {
     const urlsToCache = [
         '/',
-        '/node_modules/jquery/dist/jquery.min.js',
-        '/node_modules/popper.js/dist/popper.min.js',
-        '/node_modules/bootstrap/dist/js/bootstrap.min.js',
+        '/src/js/jquery-3.2.1.slim.min.js',
+        '/src/js/popper.min.js',
+        '/src/js/bootstrap.min.js',
         '/node_modules/idb/lib/idb.js',
         '/src/js/myScript.js',
         '/src/js/mySwTasks.js',
         '/socket.io/socket.io.js',
-        '/node_modules/bootstrap/dist/css/bootstrap.min.css',
+        '/src/css/bootstrap.min.css', 
         '/src/css/myStyles.css'
     ];
     const imgsToCache = [
@@ -53,8 +51,10 @@ self.addEventListener('activate', event => {
 
 //handles fetch event of service worker
 self.addEventListener('fetch', (event) => {
-    let requestUrl = new URL(event.request.url);
-    if (requestUrl.origin === location.origin) {
+    let requestUrl = new URL(event.request.url);    
+    const herokuApi = 'https://headlines-tobe.herokuapp.com';
+    
+    if (requestUrl.origin === origin || requestUrl.origin === herokuApi) {
         if (requestUrl.pathname.startsWith('/news/')) {
             let response;
             if (requestUrl.pathname.startsWith('/news/allNews')) response = getAllNews(event.request.url);
@@ -127,25 +127,26 @@ function getAllNews(url) {
         });
     })
 
-    function fetchAndSaveAllNews() {
-        return fetch(url).then(response => {
-            return response.json().then(articles => {
-                if (articles.Error) return getJsonResponse(articles);
-
+    async function fetchAndSaveAllNews() {
+        try {
+            const response = await fetch(url);
+            const articles = await response.json();
+            if (!articles.Error){
                 saveNews('allNews', articles).then(() => {
                     cleanAllNewsDb('allNews', 30);
-                })
+                });
+            }
 
-                return getJsonResponse(articles);
-            })
-        }).catch(err => {
+            return getJsonResponse(articles);
+        }
+        catch (err) {
             return getJsonResponse({ Error: "Network error retrieving updated news. (All)" });
-        });
+        }
     }
 }
 
 
-//returns all sources from idb/network and saves sources (to account for changes)
+    //returns all sources from idb/network and saves sources (to account for changes)
 function getSources(url) {
     return dbPromise().then(db => {
         if (!db) return fetchAndSaveSources();
@@ -160,18 +161,18 @@ function getSources(url) {
         });
     })
 
-    function fetchAndSaveSources() {
-        return fetch(url).then(response => {
-            return response.json().then(sourceObject => {
-                if (sourceObject.Error) return getJsonResponse(sourceObject);
-
-                saveValues('sources', sourceObject, 'sourceId', 'allSources');
-
+    async function fetchAndSaveSources() {
+        try {
+            const response = await fetch(url);
+            const sourceObject = await response.json();
+            if (sourceObject.Error)
                 return getJsonResponse(sourceObject);
-            })
-        }).catch(error => {
+            saveValues('sources', sourceObject, 'sourceId', 'allSources');
+            return getJsonResponse(sourceObject);
+        }
+        catch (error) {
             return getJsonResponse({ Error: "Network error retrieving updated sources" });
-        });
+        }
     }
 }
 
@@ -191,18 +192,18 @@ function getCountries(url) {
         });
     })
 
-    function fetchAndSaveCountries() {
-        return fetch(url).then(response => {
-            return response.json().then(countriesObject => {
-                if (countriesObject.Error) return getJsonResponse(countriesObject);
-
-                saveValues('countries', countriesObject, 'countryId', 'allCountries');
-
+    async function fetchAndSaveCountries() {
+        try {
+            const response = await fetch(url);
+            const countriesObject = await response.json();
+            if (countriesObject.Error)
                 return getJsonResponse(countriesObject);
-            })
-        }).catch(err => {
+            saveValues('countries', countriesObject, 'countryId', 'allCountries');
+            return getJsonResponse(countriesObject);
+        }
+        catch (err) {
             return getJsonResponse({ Error: "Network error retrieving updated countries" });
-        });
+        }
     }
 }
 
@@ -227,20 +228,20 @@ function getByCountry(url) {
         });
     })
 
-    function fetchAndSaveByCountry() {
-        return fetch(url).then(response => {
-            return response.json().then(articles => {
-                if (articles.Error) return getJsonResponse(articles);
-
-                saveNews('countryNews', articles).then(val =>  {
-                    cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode);
-                });
-
+    async function fetchAndSaveByCountry() {
+        try {
+            const response = await fetch(url);
+            const articles = await response.json();
+            if (articles.Error)
                 return getJsonResponse(articles);
-            })
-        }).catch(error => {
+            saveNews('countryNews', articles).then(val => {
+                cleanFilteredNewsDb('countryNews', 20, 'urlByCountryCode', countryCode);
+            });
+            return getJsonResponse(articles);
+        }
+        catch (error) {
             return getJsonResponse({ Error: "Error retrieving updated news. (Country Code: " + countryCode + ")" });
-        });
+        }
     }
 }
 
@@ -265,20 +266,20 @@ function getBySource(url) {
         });
     })
 
-    function fetchAndSaveBySource() {
-        return fetch(url).then(response => {
-            return response.json().then(articles => {
-                if (articles.Error) return getJsonResponse(articles);
-
-                saveNews('sourceNews', articles).then(val => {
-                    cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
-                });
-
+    async function fetchAndSaveBySource() {
+        try {
+            const response = await fetch(url);
+            const articles = await response.json();
+            if (articles.Error)
                 return getJsonResponse(articles);
-            })
-        }).catch(error => {
-            return getJsonResponse({ Error: "Error retrieving updated news. (Source Code: " + sourceCode + ")"  });
-        });
+            saveNews('sourceNews', articles).then(val => {
+                cleanFilteredNewsDb('sourceNews', 20, 'urlBySourceCode', sourceCode);
+            });
+            return getJsonResponse(articles);
+        }
+        catch (error) {
+            return getJsonResponse({ Error: "Error retrieving updated news. (Source Code: " + sourceCode + ")" });
+        }
     }
 }
 

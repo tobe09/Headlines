@@ -1,13 +1,13 @@
 ﻿self.importScripts('js/idb.js');                //import indexed db promise file
 
 const staticCache = 'headlines-static-4';  
-const imgCache = 'headlines-content-imgs'; 
+const imgCache = 'headlines-content-imgs-4'; 
 const allCaches = [staticCache, imgCache];
 
 //handles install event of service worker
 self.addEventListener('install', event => {
     const urlsToCache = [
-        '',
+        '/Headlines',
         'js/jquery-3.2.1.slim.min.js',
         'js/popper.min.js',
         'js/bootstrap.min.js',

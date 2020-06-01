@@ -1,9 +1,9 @@
-﻿self.importScripts('/node_modules/idb/lib/idb.js');                //import indexed db promise file
+﻿self.importScripts('/node_modules/idb/lib/idb.js');                    //import indexed db promise file
 
 const staticCache = 'headlines-static-3'; 
 const imgCache = 'headlines-content-imgs';
 const allCaches = [staticCache, imgCache];
-
+    
 //handles install event of service worker
 self.addEventListener('install', event => {
     const urlsToCache = [

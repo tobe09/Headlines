@@ -407,17 +407,21 @@ function notificationSetup() {
                 if (result === 'granted') return subscribeUserToPush();
                 return result;
             })
-                .then(result => {
-                    if (result === 'default') errorMsg("Live news subscription unsuccessful");
-                    else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings.");
-                    else if (result.Error && result.Error != '') errorMsg(result.Error);
-                    else successMsg("Live news subscription successful");
-                })
-                .catch(err => {
-                    unsubscribePushNotif();
-                    putNotifBtnOff();
-                    errorMsg("Live news subscription failed");
-                })
+            .then(result => {
+                if (result === 'default') errorMsg("Live news subscription unsuccessful");
+                else if (result === 'denied') errorMsg("Live news subscription blocked. Unblock from browser settings (Notification).");
+                else if (result.Error && result.Error != '') errorMsg(result.Error);
+                else {
+                    successMsg("Live news subscription successful");
+                    return;
+                }
+                putNotifBtnOff();
+            })
+            .catch(err => {
+                unsubscribePushNotif();
+                putNotifBtnOff();
+                errorMsg("Live news subscription failed");
+            })
         }).then(() => enableNotifBtns());
     });
 
@@ -476,22 +480,13 @@ function disableNotifBtns() {
 function enableNotifBtns() {
     $("#notifNo").css("opacity", 1);
     $("#notifYes").css("opacity", 1);
-    return;
 }
 
 
 //function to set the notification state of the client
-function setNotifState(result) {
-    if (result === 'granted' || result === 'default') {
-        showNotifDiv();
-    }
-    else{
-        hideNotifDiv();
-    }
-
-    getPushSubscription().then(subscription => {
-        subscription ? putNotifBtnOn() : putNotifBtnOff();
-    })
+function setNotifState(_) {
+    showNotifDiv();     // result === 'default', 'granted', 'denied'
+    getPushSubscription().then(subscription => subscription ? putNotifBtnOn() : putNotifBtnOff());
 }
 
 

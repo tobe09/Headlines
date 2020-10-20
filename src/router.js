@@ -14,7 +14,7 @@ setVapidDetails('mailto:chineketobenna@gmail.com', publicKey, privateKey);
 const { connect, Schema, model, connection } = require('mongoose');
 const isLocalDevelopment = false;
 const localAddress = 'mongodb://localhost:27017/headlinesdb';                                  //local development address
-const hostAddress = 'mongodb://tobe09:nkeody09@ds141889.mlab.com:41889/headlinesdb';             //mLab repository address
+const hostAddress = 'mongodb+srv://tobe09:nkeody09@headlinesdb.c4iis.mongodb.net/headlinesdb?retryWrites=true&w=majority' //mongoDb atlas repository address
 const address = isLocalDevelopment ? localAddress : hostAddress;
 connect(address);
 
@@ -236,7 +236,7 @@ router.post('/pushSubscriptions', function (req, res) {
             subscriptionString: JSON.stringify(pushSub)
         }); 
 
-        newSubscription.save(function (err, sub) {
+        newSubscription.save(function (err, _) {
             if (err) res.json({ Error: 'Error occurred while saving subscription.' });
             else res.json({ Error: '' });
         })
